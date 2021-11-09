@@ -1,0 +1,3 @@
+* My personal configuration files for GNU Linux
+
+_Note_: support only for Arch based systems.
