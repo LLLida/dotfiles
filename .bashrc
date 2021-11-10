@@ -19,7 +19,7 @@ export EDITOR='emacsclient -c'
 export VISUAL='emacsclient -c'
 
 # PS1='[\u@\h \W]\$ '
-PS1='\[\e[1;32m\]\u \[\e[1;33m\]->\[\e[0m\] '
+PS1='\[\e[0;34m\]\u\[\e[1;33m\]/\[\e[1;32m\]\w \[\e[1;33m\]->\[\e[0m\] '
 
 if [ -d "$HOME/.bin" ] ;
   then PATH="$HOME/.bin:$PATH"
