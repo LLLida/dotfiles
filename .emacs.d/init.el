@@ -49,6 +49,9 @@
       read-buffer-completion-ignore-case t
       completion-styles '(substring initials flex partial-completion))
 
+;; 4MB, default value is too small
+(setq gc-cons-threshold (* 4 1024 1024))
+
 ;; start emacs server
 ;; so we can just run emacsclient -c in other frames with the same emacs instance
 (server-start)
