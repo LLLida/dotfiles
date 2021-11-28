@@ -49,8 +49,8 @@
       read-buffer-completion-ignore-case t
       completion-styles '(substring initials flex partial-completion))
 
-;; 4MB, default value is too small
-(setq gc-cons-threshold (* 4 1024 1024))
+;; 16MB, default value is too small
+(setq gc-cons-threshold (* 16 1024 1024))
 
 ;; start emacs server
 ;; so we can just run emacsclient -c in other frames with the same emacs instance
@@ -325,9 +325,11 @@
 ;; syntax highlighting with tree sitter
 (use-package tree-sitter
   :diminish tree-sitter-mode
-  :hook ((c-mode c++-mode c-or-c++-mode
-                 python-mode
-                 rustic-mode) . tree-sitter-hl-mode)
+  :hook ((c-mode
+          c++-mode c-or-c++-mode
+          python-mode
+          ;; d-mode
+          ) . tree-sitter-hl-mode)
   :config (use-package tree-sitter-langs))
 
 (use-package company-c-headers
@@ -374,6 +376,12 @@
          ("\\.glsl\\'" . glsl-mode))
   :config
   (bind-key "C-<return>" 'c-next-line glsl-mode-map))
+
+(use-package d-mode
+  :mode ("\\.d\\'" . d-mode)
+  :config
+  (bind-key "C-<return>" 'c-next-line d-mode-map)
+  (bind-key "C-;" 'c-end-expression d-mode-map))
 
 ;; view pdf files
 (use-package pdf-tools
