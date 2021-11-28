@@ -1,0 +1,4 @@
+# trust any .gdbinit
+set auto-load safe-path /
+# enable pretty printing
+set print pretty on
