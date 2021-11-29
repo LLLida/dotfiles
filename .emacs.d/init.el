@@ -319,6 +319,12 @@
   (all-the-icons-ibuffer-mode 1)
   (setq all-the-icons-ibuffer-human-readable-size t))
 
+;; show additional information when completing commands
+(use-package marginalia
+  :commands (execute-extended-command)
+  :config
+  (marginalia-mode))
+
 
 ;;; Programming modes
 
