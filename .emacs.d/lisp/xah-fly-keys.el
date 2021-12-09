@@ -3630,55 +3630,6 @@ minor modes loaded later may override bindings in this map.")
 
 (when xah-fly-use-meta-key
   (global-set-key (kbd "M-SPC") 'xah-fly-command-mode-activate)
-  (global-set-key (kbd "M-\"") 'nil) ; delete-horizontal-space
-  (global-set-key (kbd "M-!") 'nil)  ; shell-command
-  (global-set-key (kbd "M-$") 'nil)  ; ispell-word
-  (global-set-key (kbd "M-%") 'nil)  ; query-replace
-  (global-set-key (kbd "M-&") 'nil)  ; async-shell-command
-  (global-set-key (kbd "M-'") 'nil)  ; abbrev-prefix-mark
-  (global-set-key (kbd "M-(") 'nil)  ; insert-parentheses
-  (global-set-key (kbd "M-)") 'nil)  ; move-past-close-and-reindent
-  ;; (global-set-key (kbd "M-,") 'nil) ; xref-pop-marker-stack
-  ;; (global-set-key (kbd "M-.") 'nil) ; xref-find-definitions
-  (global-set-key (kbd "M-/") 'nil) ; dabbrev-expand
-  (global-set-key (kbd "M-:") 'nil) ; eval-expression
-  ;; (global-set-key (kbd "M-;") 'nil) ; comment-dwim
-  (global-set-key (kbd "M-<") 'nil) ; beginning-of-buffer
-  (global-set-key (kbd "M-=") 'nil) ; count-words-region
-  (global-set-key (kbd "M->") 'nil) ; end-of-buffer
-  ;; (global-set-key (kbd "M-?") 'nil) ; xref-find-references
-  (global-set-key (kbd "M-@") 'nil) ; mark-word
-  (global-set-key (kbd "M-^") 'nil) ; delete-indentation
-  (global-set-key (kbd "M-`") 'nil) ; tmm-menubar
-  (global-set-key (kbd "M-a") 'nil) ; backward-sentence
-  (global-set-key (kbd "M-b") 'nil) ; backward-word
-  (global-set-key (kbd "M-c") 'nil) ; capitalize-word
-  (global-set-key (kbd "M-d") 'nil) ;  kill-word
-  (global-set-key (kbd "M-e") 'nil) ; forward-sentence
-  (global-set-key (kbd "M-f") 'nil) ; forward-word
-  (global-set-key (kbd "M-g") 'nil) ; Prefix Command
-  (global-set-key (kbd "M-h") 'nil) ; mark-paragraph
-  (global-set-key (kbd "M-i") 'nil) ; tab-to-tab-stop
-  (global-set-key (kbd "M-j") 'nil) ; default-indent-new-line
-  (global-set-key (kbd "M-k") 'nil) ; kill-sentence
-  (global-set-key (kbd "M-l") 'nil) ; downcase-word
-  (global-set-key (kbd "M-m") 'nil) ; back-to-indentation
-  (global-set-key (kbd "M-o") 'nil) ; facemenu-keymap
-  (global-set-key (kbd "M-q") 'nil) ; fill-paragraph
-  (global-set-key (kbd "M-r") 'nil) ; move-to-window-line-top-bottom
-  (global-set-key (kbd "M-s") 'nil) ; Prefix Command
-  (global-set-key (kbd "M-t") 'nil) ; transpose-words
-  (global-set-key (kbd "M-u") 'nil) ; upcase-word
-  (global-set-key (kbd "M-v") 'nil) ; scroll-down-command
-  (global-set-key (kbd "M-w") 'nil) ; kill-ring-save
-  ;; (global-set-key (kbd "M-x") 'nil) ; execute-extended-command
-  ;; (global-set-key (kbd "M-y") 'nil) ; yank-pop
-  (global-set-key (kbd "M-z") 'nil)   ; zap-to-char
-  (global-set-key (kbd "M-{") 'nil)   ; backward-paragraph
-  (global-set-key (kbd "M-|") 'nil)   ; shell-command-on-region
-  (global-set-key (kbd "M-}") 'nil)   ; forward-paragraph
-  (global-set-key (kbd "M-~") 'nil)   ; not-modified
-  (global-set-key (kbd "M-DEL") 'nil) ; backward-kill-word
   )
 
 (when xah-fly-use-control-key
