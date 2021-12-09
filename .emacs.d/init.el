@@ -321,7 +321,6 @@
 
 ;; show additional information when completing commands
 (use-package marginalia
-  :commands (execute-extended-command)
   :config
   (marginalia-mode))
 
