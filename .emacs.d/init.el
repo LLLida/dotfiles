@@ -415,7 +415,8 @@
 (use-package smart-mode-line
   :config
   (setq sml/name-width 30
-        sml/no-confirm-load-theme t)
+        sml/no-confirm-load-theme t
+        sml/theme 'respectful)
   (sml/setup))
 (setq inhibit-compacting-font-caches t
       mode-line-position '(:eval (format "L%d" (line-number-at-pos)))
@@ -427,9 +428,12 @@
 
 ;; theme
 ;; (load-theme 'modus-operandi t)
-(use-package kaolin-themes
+;; (use-package kaolin-themes
+;;   :config
+;;   (load-theme 'kaolin-blossom t))
+(use-package doom-themes
   :config
-  (load-theme 'kaolin-blossom t))
+  (load-theme 'doom-molokai t))
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
