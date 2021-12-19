@@ -438,6 +438,24 @@
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
 
+;; tabs
+(tab-bar-mode)
+;; highlight current tab
+(set-face-attribute 'tab-bar-tab nil
+                    :foreground nil
+                    :background nil
+                    :box t
+                    :inherit 'font-lock-keyword-face)
+;; change tab format
+(defun lida/tab-bar-format (tab i)
+  (propertize
+   (alist-get 'name tab)
+   'face (funcall tab-bar-tab-face-function tab)))
+(setq tab-bar-tab-name-format-function #'lida/tab-bar-format)
+;; pg up/down switch between tabs
+(bind-key "<prior>" 'tab-bar-switch-to-prev-tab xah-fly-command-map)
+(bind-key "<next>" 'tab-bar-switch-to-next-tab xah-fly-command-map)
+
 
 ;;; Misc
 
