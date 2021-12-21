@@ -455,6 +455,21 @@
 ;; pg up/down switch between tabs
 (bind-key "<prior>" 'tab-bar-switch-to-prev-tab xah-fly-command-map)
 (bind-key "<next>" 'tab-bar-switch-to-next-tab xah-fly-command-map)
+;; move global data in modeline(such as time or battery status) to tab bar.
+(setq lida/global-mode-string '("" display-time-string battery-mode-line-string))
+(defun lida/tab-bar-format-global ()
+  "Produce display of `global-mode-string' in the tab bar.
+When `tab-bar-format-global' is added to `tab-bar-format'
+(possibly appended after `tab-bar-format-align-right'),
+then modes that display information on the mode line
+using `global-mode-string' will display the same text
+on the tab bar instead."
+  `((global menu-item ,(string-trim-right (format-mode-line lida/global-mode-string)) ignore)))
+(setq tab-bar-format '(tab-bar-format-history
+                       tab-bar-format-tabs
+                       tab-bar-format-align-right
+                       lida/tab-bar-format-global))
+(setq global-mode-string '(""))
 
 
 ;;; Misc
