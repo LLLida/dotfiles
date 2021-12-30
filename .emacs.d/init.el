@@ -37,7 +37,7 @@
 
 ;; smooth scrolling
 (setq scroll-step 1
-      scroll-margin 10
+      scroll-margin 7
       scroll-conservatively 10000)
 
 ;; always type y instead of yes
@@ -427,13 +427,9 @@
 (display-time)
 
 ;; theme
-;; (load-theme 'modus-operandi t)
-;; (use-package kaolin-themes
-;;   :config
-;;   (load-theme 'kaolin-blossom t))
-(use-package doom-themes
+(use-package kaolin-themes
   :config
-  (load-theme 'doom-molokai t))
+  (load-theme 'kaolin-dark t))
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
