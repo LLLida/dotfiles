@@ -1,4 +1,4 @@
-;; My init.el
+;; My init.el  -*- lexical-binding: t; -*-
 
 
 ;;; Defaults
@@ -247,16 +247,6 @@
 (global-set-key (kbd "RET") 'newline-and-indent)
 (setq-default indent-tabs-mode nil)
 (setq c-default-style "gnu")
-(use-package aggressive-indent
-  :diminish
-  :config
-  (global-aggressive-indent-mode 1)
-  (add-to-list
-   'aggressive-indent-dont-indent-if
-   '(and (derived-mode-p 'c++-mode)
-         (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
-                             (thing-at-point 'line)))))
-  )
 
 ;; parentheses
 (show-paren-mode t)
