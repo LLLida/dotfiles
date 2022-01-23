@@ -56,87 +56,14 @@
 ;; so we can just run emacsclient -c in other frames with the same emacs instance
 (server-start)
 
-
-;;; Keybindings
-(setq xah-fly-use-control-key nil)
-(require 'xah-fly-keys)
-(xah-fly-keys-set-layout "qwerty")
-(xah-fly-keys 1)
-(defun xah-fly-define-char(CHAR FUNCTION)
-  "Define a single char command FUNCTION on `xah-fly-command-map'."
-  (define-key xah-fly-command-map (kbd (xah-fly--key-char CHAR)) FUNCTION))
-;; Modes where xfk isn't required
-(add-hook 'dired-mode-hook 'xah-fly-insert-mode-activate)
-(add-hook 'ibuffer-hook 'xah-fly-insert-mode-activate)
-;; Russian layout for xfk http://ergoemacs.org/misc/xah-fly-keys_russian.html
-(define-key xah-fly-key-map (kbd "й") 'reformat-lines-or-quit)
-(define-key xah-fly-key-map (kbd "ц") 'xah-shrink-whitespaces)
-(define-key xah-fly-key-map (kbd "э") 'xah-cycle-hyphen-underscore-space)
-(define-key xah-fly-key-map (kbd "у") 'xah-backward-kill-word)
-(define-key xah-fly-key-map (kbd "я") 'xah-comment-dwim)
-(define-key xah-fly-key-map (kbd "х") 'hippie-expand)
-(define-key xah-fly-key-map (kbd "ф") 'execute-extended-command)
-(define-key xah-fly-key-map (kbd "т") 'isearch-forward)
-(define-key xah-fly-key-map (kbd "ш") 'previous-line)
-(define-key xah-fly-key-map (kbd "р") 'xah-beginning-of-line-or-block)
-(define-key xah-fly-key-map (kbd "в") 'xah-delete-backward-char-or-bracket-text)
-(define-key xah-fly-key-map (kbd "н") 'undo)
-(define-key xah-fly-key-map (kbd "г") 'backward-word)
-(define-key xah-fly-key-map (kbd "о") 'backward-char)
-(define-key xah-fly-key-map (kbd "п") 'xah-delete-current-text-block)
-(define-key xah-fly-key-map (kbd "с") 'easy-kill)
-(define-key xah-fly-key-map (kbd "м") 'xah-paste-or-paste-previous)
-(define-key xah-fly-key-map (kbd "з") 'xah-insert-space-before)
-(define-key xah-fly-key-map (kbd "ь") 'xah-backward-left-bracket)
-(define-key xah-fly-key-map (kbd "д") 'forward-char)
-(define-key xah-fly-key-map (kbd "ы") 'open-line)
-(define-key xah-fly-key-map (kbd "к") 'xah-kill-word)
-(define-key xah-fly-key-map (kbd "ч") 'xah-cut-line-or-region)
-(define-key xah-fly-key-map (kbd "щ") 'forward-word)
-(define-key xah-fly-key-map (kbd "ж") 'xah-end-of-line-or-block)
-(define-key xah-fly-key-map (kbd "л") 'next-line)
-(define-key xah-fly-key-map (kbd "а") 'xah-fly-insert-mode-activate)
-(define-key xah-fly-key-map (kbd "б") 'xah-next-window-or-frame)
-(define-key xah-fly-key-map (kbd "и") 'xah-toggle-letter-case)
-(define-key xah-fly-key-map (kbd "е") 'set-mark-command)
-(define-key xah-fly-key-map (kbd "SPC ж") 'save-buffer)
-(define-key key-translation-map (kbd "ESC") (kbd "C-g")) ;; use ESC instead of C-g
-(define-key xah-fly-command-map (kbd "<SPC> x") ctl-x-map) ;; X means C-x
-(xah-fly-define-char "N" 'isearch-backward) ;; N for isearch-backward
-(bind-key "<SPC> }" 'enlarge-window-horizontally xah-fly-command-map)
-(bind-key "<SPC> {" 'shrink-window-horizontally xah-fly-command-map)
-(bind-key "<SPC> :" 'eshell xah-fly-command-map)
-(bind-key "<SPC> *" 'calc-dispatch xah-fly-command-map) ;; <SPC> * instead of C-x *
-(bind-key "<SPC> 8" 'insert-char xah-fly-command-map)
-(xah-fly-define-char "V" (lambda () ;; V is same to C-u
-                           (interactive)
-                           (yank)
-                           (exchange-point-and-mark)))
-(global-set-key [remap xah-new-empty-buffer] 'bookmark-jump) ;; SPC-i l
-(defun reformat-lines-or-quit ()
-  "Reformat lines if we are editing text otherwise quit the window.
-             If `eshell-mode' then delete window.
-             If `read-only-mode' then kill buffer and delete window.
-             Otherwise `xah-reformat-lines'."
-  (interactive)
-  (require 'eshell)
-  (cond
-   ((string= (buffer-name) eshell-buffer-name)
-    (delete-window))
-   (buffer-read-only
-    (kill-buffer)
-    (delete-window))
-   (t
-    (xah-reformat-lines))))
-(global-set-key [remap xah-reformat-lines] #'reformat-lines-or-quit)
+;; Easily switch between .cpp and .hpp files
+(global-set-key (kbd "M-o") 'ff-find-other-file)
+
+;; Delete trailing whitespaces and save buffer.
 (global-set-key [remap save-buffer] (lambda ()
-                                      "Delete trailing whitespaces and save buffer."
                                       (interactive)
                                       (delete-trailing-whitespace)
                                       (save-buffer)))
-
-;; Easily switch between .cpp and .hpp files
-(global-set-key (kbd "M-o") 'ff-find-other-file)
 
 ;; save buffers between sessions
 (desktop-save-mode 1)
@@ -146,16 +73,15 @@
 
 
 ;;; Utilities
-;; minimize mode line
+;; minimize information in mode line
 (use-package diminish)
-(diminish 'xah-fly-keys)
+
+(require 'lida-keys)
 
 (use-package multiple-cursors
   :bind
-  (:map xah-fly-command-map
-        ("M-k" . mc/mark-next-like-this)
-        ("M-i" . mc/mark-previous-like-this)
-        ("a" . mc/mark-all-like-this))
+  (("C->" . mc/mark-next-like-this)
+   ("C-<" . mc/mark-previous-like-this))
   :config
   (setq mc/always-run-for-all t)
   ;; (xah-fly-define-char "a" 'mc/mark-all-like-this)
@@ -175,16 +101,9 @@
                                (if (search-backward cursor last-abbrev-location t)
                                    (delete-char (length cursor))))))))
 
-;; copy things very fast
-(use-package easy-kill
-  :bind (:map xah-fly-command-map
-              ("<SPC> c" . easy-kill)))
-
 ;; mark things very fast
 (use-package expand-region
-  :bind (("C-=" . er/expand-region)
-         :map xah-fly-command-map
-         ([remap xah-extend-selection] . er/expand-region)))
+  :bind (("C-=" . er/expand-region)))
 
 ;; dired - the file manager
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
@@ -213,10 +132,11 @@
   :hook (emacs-lisp-mode . form-feed-mode))
 
 ;; setup eshell
+(global-set-key (kbd "C-:") #'eshell)
 (add-hook 'eshell-mode-hook (lambda ()
                               (setq-local mode-line-format nil)))
 
-;; COMPlete ANY
+;; COMPlete ANy
 (use-package company
   :demand t
   :diminish
@@ -228,8 +148,7 @@
   (global-company-mode 1)
   ;; disabling company for gdb for now because it just stops responding when there are too many completions
   (add-hook 'gud-mode-hook (lambda ()
-                             (company-mode -1)))
-  :bind ("C-." . company-complete))
+                             (company-mode -1))))
 (use-package company-quickhelp ;; Show docs within popup
   :after company
   :config (company-quickhelp-mode))
@@ -237,7 +156,9 @@
 ;; displays available keys if you forgot one of them
 (use-package which-key
   :diminish
-  :config (which-key-mode))
+  :config
+  (which-key-mode)
+  (which-key-enable-god-mode-support))
 
 ;; documentation
 (diminish 'eldoc-mode)
@@ -269,13 +190,13 @@
 
 ;; manage projects
 (use-package projectile
-  :defer t
   :diminish
   :config
   (add-to-list 'projectile-globally-ignored-directories "build")
   (projectile-mode)
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-  (define-key xah-fly-command-map (kbd "<SPC> p") 'projectile-command-map))
+  (define-key projectile-mode-map (kbd "C-c C-p") 'projectile-command-map)
+  (bind-key "C-c" 'projectile-compile-project projectile-command-map)
+  (bind-key "C-s" 'projectile-grep projectile-command-map))
 
 ;; ibuffer
 (require 'ibuffer)
@@ -331,19 +252,12 @@
   :after company
   :config (add-to-list 'company-backends 'company-c-headers))
 
-;; some useful commands
-(use-package crux
-  :bind
-  (:map xah-fly-command-map
-        ("<SPC> e o". crux-open-with)
-        ("<SPC> 2". crux-transpose-windows)
-        ("<SPC> z" . crux-duplicate-and-comment-current-line-or-region)))
-
 ;; git
-(use-package magit
-  :commands (magit-status magit)
-  :bind (:map xah-fly-command-map
-              ("<SPC> e g")))
+;; (unless use-god-mode
+;;   (use-package magit
+;;     :commands (magit-status magit)
+;;     :bind (:map xah-fly-command-map
+;;                 ("<SPC> e g"))))
 
 ;; some keybindings for c/c++
 (defun c-end-expression ()
@@ -409,12 +323,14 @@
         sml/theme 'respectful)
   (sml/setup))
 (setq inhibit-compacting-font-caches t
-      mode-line-position '(:eval (format "L%d" (line-number-at-pos)))
+      mode-line-position nil
       display-time-default-load-average nil
       display-time-format " %R ")
 (setq battery-mode-line-format "(%b%p%%)")
 (display-battery-mode t)
 (display-time)
+;; cull mode which displays current function name in modeline
+(which-function-mode 1)
 
 ;; theme
 (use-package kaolin-themes
@@ -439,8 +355,10 @@
    'face (funcall tab-bar-tab-face-function tab)))
 (setq tab-bar-tab-name-format-function #'lida/tab-bar-format)
 ;; pg up/down switch between tabs
-(bind-key "<prior>" 'tab-bar-switch-to-prev-tab xah-fly-command-map)
-(bind-key "<next>" 'tab-bar-switch-to-next-tab xah-fly-command-map)
+(progn
+  (require 'god-mode)
+  (bind-key "<prior>" 'tab-bar-switch-to-prev-tab god-local-mode-map)
+  (bind-key "<next>" 'tab-bar-switch-to-next-tab god-local-mode-map))
 ;; move global data in modeline(such as time or battery status) to tab bar.
 (setq lida/global-mode-string '("" display-time-string battery-mode-line-string))
 (defun lida/tab-bar-format-global ()
@@ -486,8 +404,8 @@ on the tab bar instead."
 ;; https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-03.org
 (use-package mu4e
   :load-path "/usr/share/emacs/site-lisp/mu4e/"
-  :bind (:map xah-fly-command-map
-              ("<SPC> e m" . mu4e))
+  ;; :bind (:map xah-fly-command-map
+  ;;             ("<SPC> e m" . mu4e))
   :config
   (setq mu4e-change-filenames-when-moving t
         mu4e-update-interval 1800
