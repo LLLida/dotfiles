@@ -254,11 +254,22 @@
   :config (add-to-list 'company-backends 'company-c-headers))
 
 ;; git
-;; (unless use-god-mode
-;;   (use-package magit
-;;     :commands (magit-status magit)
-;;     :bind (:map xah-fly-command-map
-;;                 ("<SPC> e g"))))
+(use-package magit
+  :commands (magit-status magit))
+
+;; highlight function calls in C-based modes
+;; https://emacs.stackexchange.com/questions/16750/better-syntax-higlighting-for-member-variables-and-function-calls-in-cpp-mode
+(dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
+  (font-lock-add-keywords
+    mode-iter
+    '(("\\([~^&\|!<>=,.\\+*/%-]\\)" 0 'font-lock-operator-face keep)))
+  (font-lock-add-keywords
+    mode-iter
+    '(("\\([\]\[}{)(:;]\\)" 0 'font-lock-delimit-face keep)))
+  ;; functions
+  (font-lock-add-keywords
+    mode-iter
+    '(("\\([_a-zA-Z][_a-zA-Z0-9]*\\)\s*(" 1 'font-lock-function-name-face keep))))
 
 ;; some keybindings for c/c++
 (defun c-end-expression ()
