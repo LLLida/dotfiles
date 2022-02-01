@@ -94,4 +94,18 @@ Version: 2016-11-22"
 (bind-key "<right>" 'isearch-repeat-forward isearch-mode-map)
 (bind-key "C-'" 'backward-delete-char-untabify)
 
+(defun my/smart-insert-parens (begin end)
+  "Insert parens around marked region."
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list (point) (point))))
+  (save-excursion
+    (goto-char begin)
+    (insert "(")
+    (goto-char (+ 1 end))
+    (insert ")"))
+  (unless (use-region-p)
+    (forward-char)))
+(bind-key "C-(" 'my/smart-insert-parens)
+
 (provide 'lida-keys)
