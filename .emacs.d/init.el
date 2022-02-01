@@ -81,7 +81,8 @@
 (use-package multiple-cursors
   :bind
   (("C->" . mc/mark-next-like-this)
-   ("C-<" . mc/mark-previous-like-this))
+   ("C-<" . mc/mark-previous-like-this)
+   ("C-c C-=" . mc/mark-all-like-this))
   :config
   (setq mc/always-run-for-all t)
   ;; (xah-fly-define-char "a" 'mc/mark-all-like-this)
@@ -172,8 +173,8 @@
 ;; parentheses
 (show-paren-mode t)
 (setq show-paren-style 'mixed);; highlight brackets if visible, else entire expression
-(electric-pair-mode t)
-(electric-indent-mode nil)
+;; (electric-pair-mode t)
+;; (electric-indent-mode nil)
 
 ;; compilation
 (require 'compile)
