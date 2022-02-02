@@ -354,9 +354,9 @@
 (which-function-mode 1)
 
 ;; theme
-(use-package kaolin-themes
+(use-package cyberpunk-theme
   :config
-  (load-theme 'kaolin-dark t))
+  (load-theme 'cyberpunk t))
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
