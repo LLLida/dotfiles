@@ -257,7 +257,7 @@
 (use-package magit
   :commands (magit-status magit))
 
-;; highlight function calls in C-based modes
+;; improve syntax highlighting in C-based modes
 ;; https://emacs.stackexchange.com/questions/16750/better-syntax-higlighting-for-member-variables-and-function-calls-in-cpp-mode
 (dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
   (font-lock-add-keywords
@@ -266,10 +266,19 @@
   (font-lock-add-keywords
     mode-iter
     '(("\\([\]\[}{)(:;]\\)" 0 'font-lock-delimit-face keep)))
+  ;; constants
+  (font-lock-add-keywords
+    mode-iter
+    '(("\\<\[A-Z_\]\+\\>" 0 'font-lock-constant-face keep)))
   ;; functions
   (font-lock-add-keywords
     mode-iter
     '(("\\([_a-zA-Z][_a-zA-Z0-9]*\\)\s*(" 1 'font-lock-function-name-face keep))))
+
+;; (dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
+;;   (font-lock-add-keywords
+;;     mode-iter
+;;     '(("\\<\[A-Z_\]\+\\>" 0 'font-lock-constant-face keep))))
 
 ;; some keybindings for c/c++
 (defun c-end-expression ()
