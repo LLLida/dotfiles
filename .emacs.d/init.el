@@ -262,18 +262,18 @@
 (dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
   (font-lock-add-keywords
     mode-iter
-    '(("\\([~^&\|!<>=,.\\+*/%-]\\)" 0 'font-lock-operator-face keep)))
+    '(("\\([~^&\|!<>=,.\\+*/%-]\\)" 0 'font-lock-operator-face keep)) t)
   (font-lock-add-keywords
     mode-iter
-    '(("\\([\]\[}{)(:;]\\)" 0 'font-lock-delimit-face keep)))
+    '(("\\([\]\[}{)(:;]\\)" 0 'font-lock-delimit-face keep)) t)
   ;; constants
   (font-lock-add-keywords
     mode-iter
-    '(("\\<\[A-Z_\]\+\\>" 0 'font-lock-constant-face keep)))
+    '(("\\<\[A-Z_\]\+\\>" 0 'font-lock-constant-face keep)) t)
   ;; functions
   (font-lock-add-keywords
     mode-iter
-    '(("\\([_a-zA-Z][_a-zA-Z0-9]*\\)\s*(" 1 'font-lock-function-name-face keep))))
+    '(("\\([_a-zA-Z][_a-zA-Z0-9]*\\)\s*(" 1 'font-lock-function-name-face keep)) t))
 
 ;; (dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
 ;;   (font-lock-add-keywords
