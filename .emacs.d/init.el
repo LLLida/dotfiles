@@ -260,12 +260,6 @@
 ;; improve syntax highlighting in C-based modes
 ;; https://emacs.stackexchange.com/questions/16750/better-syntax-higlighting-for-member-variables-and-function-calls-in-cpp-mode
 (dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
-  (font-lock-add-keywords
-    mode-iter
-    '(("\\([~^&\|!<>=,.\\+*/%-]\\)" 0 'font-lock-operator-face keep)) t)
-  (font-lock-add-keywords
-    mode-iter
-    '(("\\([\]\[}{)(:;]\\)" 0 'font-lock-delimit-face keep)) t)
   ;; constants
   (font-lock-add-keywords
     mode-iter
