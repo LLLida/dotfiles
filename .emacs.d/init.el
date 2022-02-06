@@ -52,6 +52,8 @@
 ;; 16MB, default value is too small
 (setq gc-cons-threshold (* 16 1024 1024))
 
+(setq undo-limit (* 8 1024 1024))
+
 ;; start emacs server
 ;; so we can just run emacsclient -c in other frames with the same emacs instance
 (server-start)
