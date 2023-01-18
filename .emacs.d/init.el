@@ -47,7 +47,9 @@
 (setq completion-ignore-case t
       completions-detailed t
       read-buffer-completion-ignore-case t
-      completion-styles '(substring initials flex partial-completion))
+      completion-styles '(basic substring flex))
+(bind-key "C-n" 'minibuffer-next-completion minibuffer-mode-map)
+(bind-key "C-p" 'minibuffer-previous-completion minibuffer-mode-map)
 
 ;; 16MB, default value is too small
 (setq gc-cons-threshold (* 16 1024 1024))
@@ -77,8 +79,6 @@
 ;;; Utilities
 ;; minimize information in mode line
 (use-package diminish)
-
-(require 'lida-keys)
 
 (use-package multiple-cursors
   :bind
@@ -119,6 +119,18 @@
   :after dired
   :hook (dired-mode . dired-collapse-mode))
 
+;; proced - Emacs process manager
+;; https://laurencewarne.github.io/emacs/programming/2022/12/26/exploring-proced.html
+(use-package proced
+  :ensure nil
+  :commands proced
+  :config
+  ;; this significantly slows Emacs if proced buffer stays open
+  ;; (setq-default proced-auto-update-flag t)
+  (setq proced-goal-attribute nil
+        proced-enable-color-flag t)
+  (setq-default proced-format 'long))
+
 ;; manage popups easily
 (use-package shackle
   :config
@@ -135,33 +147,49 @@
   :hook (emacs-lisp-mode . form-feed-mode))
 
 ;; setup eshell
-(global-set-key (kbd "C-:") #'eshell)
+(global-set-key (kbd "C-:") #'project-eshell)
 (add-hook 'eshell-mode-hook (lambda ()
                               (setq-local mode-line-format nil)))
 
-;; COMPlete ANy
-(use-package company
-  :demand t
-  :diminish
+(use-package corfu
+  :custom
+  (corfu-auto t)
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.25)
+  (corfu-min-width 80)
+  (corfu-max-width 120)
+  (corfu-preview-current nil)
+  :hook
+  ;; disable corfu for gud-mode, https://github.com/minad/corfu/issues/157
+  (gud-mode . (lambda () (corfu-mode -1)))
+  ;; enable corfu for eglot and Emacs lisp
+  ((eglot-managed-mode . emacs-lisp-mode) . (lambda () (corfu-mode 1)))
   :config
-  (setq company-minimum-prefix-length 2
-        company-idle-delay 0.5)
-  (setq company-backends (delete 'company-clang company-backends))
-  (setq company-backends (delete 'company-semantic company-backends))
-  (global-company-mode 1)
-  ;; disabling company for gdb for now because it just stops responding when there are too many completions
-  (add-hook 'gud-mode-hook (lambda ()
-                             (company-mode -1))))
-(use-package company-quickhelp ;; Show docs within popup
-  :after company
-  :config (company-quickhelp-mode))
+  ;; (global-corfu-mode)
+  ;; show nice documentation popup
+  (require 'corfu-popupinfo)
+  (corfu-popupinfo-mode)
+  (setq corfu-popupinfo-max-height 50
+        corfu-popupinfo-delay 0.5)
+  ;; sort elements by history
+  (require 'corfu-history)
+  (corfu-history-mode)
+  (savehist-mode 1)
+  (add-to-list 'savehist-additional-variables 'corfu-history))
+
+(use-package kind-icon
+  :ensure t
+  :after corfu
+  :custom
+  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
 ;; displays available keys if you forgot one of them
 (use-package which-key
   :diminish
   :config
-  (which-key-mode)
-  (which-key-enable-god-mode-support))
+  (which-key-mode))
 
 ;; documentation
 (diminish 'eldoc-mode)
@@ -190,16 +218,6 @@
   (setq compilation-environment '("TERM=xterm-256color"))
   (advice-add 'compilation-filter :around #'(lambda (f proc string)
                                               (funcall f proc (xterm-color-filter string)))))
-
-;; manage projects
-(use-package projectile
-  :diminish
-  :config
-  (add-to-list 'projectile-globally-ignored-directories "build")
-  (projectile-mode)
-  (define-key projectile-mode-map (kbd "C-c C-p") 'projectile-command-map)
-  (bind-key "C-c" 'projectile-compile-project projectile-command-map)
-  (bind-key "C-s" 'projectile-grep projectile-command-map))
 
 ;; ibuffer
 (require 'ibuffer)
@@ -241,19 +259,9 @@
 
 ;;; Programming modes
 
-;; syntax highlighting with tree sitter
-(use-package tree-sitter
-  :diminish tree-sitter-mode
-  :hook ((c-mode
-          c++-mode c-or-c++-mode
-          python-mode
-          ;; d-mode
-          ) . tree-sitter-hl-mode)
-  :config (use-package tree-sitter-langs))
-
-(use-package company-c-headers
-  :after company
-  :config (add-to-list 'company-backends 'company-c-headers))
+;; (use-package company-c-headers
+;;   :after company
+;;   :config (add-to-list 'company-backends 'company-c-headers))
 
 ;; git
 (use-package magit
@@ -265,7 +273,7 @@
   ;; constants
   (font-lock-add-keywords
     mode-iter
-    '(("\\<\[A-Z_\]\+\\>" 0 'font-lock-constant-face keep)) t)
+    '(("\\<\[A-Z0-9_\]\+\\>" 0 'font-lock-constant-face keep)) t)
   ;; functions
   (font-lock-add-keywords
     mode-iter
@@ -292,6 +300,22 @@
 (bind-key "C-<return>" 'c-next-line c-mode-map)
 (bind-key "C-<return>" 'c-next-line c++-mode-map)
 
+(bind-key "C-x i" 'imenu)
+
+(defun my/smart-insert-parens (begin end)
+  "Insert parens around marked region."
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list (point) (point))))
+  (save-excursion
+    (goto-char begin)
+    (insert "(")
+    (goto-char (+ 1 end))
+    (insert ")"))
+  (unless (use-region-p)
+    (forward-char)))
+(bind-key "C-(" 'my/smart-insert-parens)
+
 ;; syntax highlighting for cmake
 (use-package cmake-mode)
 
@@ -299,6 +323,7 @@
   :mode (("\\.vert\\'" . glsl-mode)
          ("\\.frag\\'" . glsl-mode)
          ("\\.geom\\'" . glsl-mode)
+         ("\\.comp\\'" . glsl-mode)
          ("\\.glsl\\'" . glsl-mode))
   :config
   (bind-key "C-<return>" 'c-next-line glsl-mode-map))
@@ -312,7 +337,10 @@
 ;; view pdf files
 (use-package pdf-tools
   :mode "\\.pdf\\'"
-  :config (pdf-tools-install))
+  :config
+  (pdf-tools-install)
+  (require 'dabbrev)
+  (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode))
 
 
 ;;; UI
@@ -333,49 +361,37 @@
   )
 
 ;; Modeline
-(use-package smart-mode-line
-  :config
-  (setq sml/name-width 30
-        sml/no-confirm-load-theme t
-        sml/theme 'respectful)
-  (sml/setup))
 (setq inhibit-compacting-font-caches t
-      mode-line-position nil
       display-time-default-load-average nil
       display-time-format " %R ")
 (setq battery-mode-line-format "(%b%p%%)")
 (display-battery-mode t)
 (display-time)
+;; show region info in modeline
+(require 'modeline-region)
+(global-modeline-region-mode)
 ;; cull mode which displays current function name in modeline
-(which-function-mode 1)
+;; (which-function-mode 1)
 
 ;; theme
-(use-package cyberpunk-theme
-  :config
-  (load-theme 'cyberpunk t))
+;; (use-package kaolin-themes
+;;   :config
+;;   (load-theme 'kaolin-galaxy t)))
+(add-to-list 'custom-theme-load-path "~/.emacs.d/lisp")
+(load-theme 'naysayer t)
+;; (load-theme 'modus-vivendi t)
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
 
 ;; tabs
 (tab-bar-mode)
-;; highlight current tab
-(set-face-attribute 'tab-bar-tab nil
-                    :foreground nil
-                    :background nil
-                    :box t
-                    :inherit 'font-lock-keyword-face)
 ;; change tab format
 (defun lida/tab-bar-format (tab i)
   (propertize
    (alist-get 'name tab)
    'face (funcall tab-bar-tab-face-function tab)))
 (setq tab-bar-tab-name-format-function #'lida/tab-bar-format)
-;; pg up/down switch between tabs
-(progn
-  (require 'god-mode)
-  (bind-key "<prior>" 'tab-bar-switch-to-prev-tab god-local-mode-map)
-  (bind-key "<next>" 'tab-bar-switch-to-next-tab god-local-mode-map))
 ;; move global data in modeline(such as time or battery status) to tab bar.
 (setq lida/global-mode-string '("" display-time-string battery-mode-line-string))
 (defun lida/tab-bar-format-global ()
@@ -391,6 +407,26 @@ on the tab bar instead."
                        tab-bar-format-align-right
                        lida/tab-bar-format-global))
 (setq global-mode-string '(""))
+
+;; https://www.emacswiki.org/emacs/WholeLineOrRegion
+(defun my/kill-ring-save (beg end flash)
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end) nil)
+                 (list (line-beginning-position)
+                       (line-beginning-position 2) 'flash)))
+  (kill-ring-save beg end)
+  (when flash
+    (save-excursion
+      (if (equal (current-column) 0)
+          (goto-char end)
+        (goto-char beg))
+      (sit-for blink-matching-delay))))
+(global-set-key [remap kill-ring-save] 'my/kill-ring-save)
+(put 'kill-region 'interactive-form
+     '(interactive
+       (if (use-region-p)
+           (list (region-beginning) (region-end))
+         (list (line-beginning-position) (line-beginning-position 2)))))
 
 
 ;;; Misc
@@ -420,9 +456,7 @@ on the tab bar instead."
 ;; mail with mu4e(don't forget to do 'yay -S mu'!)
 ;; https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-03.org
 (use-package mu4e
-  :load-path "/usr/share/emacs/site-lisp/mu4e/"
-  ;; :bind (:map xah-fly-command-map
-  ;;             ("<SPC> e m" . mu4e))
+  :load-path "/usr/local/share/emacs/site-lisp/mu4e/"
   :config
   (setq mu4e-change-filenames-when-moving t
         mu4e-update-interval 1800
@@ -448,15 +482,6 @@ on the tab bar instead."
 
 ;; Org mode
 (setq org-catch-invisible-edits 'smart)
-;; display current location in org document in headerline
-(use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq org-sticky-header-full-path 'full
-        org-sticky-header-outline-path-separator "->"
-        org-sticky-header-heading-star ""
-        org-sticky-header-show-priority nil
-        org-sticky-header-show-keyword nil))
 ;; Replace ... for hidden items with ↴
 (setq org-ellipsis " ↴")
 ;; Toggle emphasis markers
@@ -468,7 +493,11 @@ on the tab bar instead."
 ;; music in emacs
 (require 'lida-music)
 
+
+
 ;; https://stackoverflow.com/questions/5052088/what-is-custom-set-variables-and-faces-in-my-emacs
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file)
 (put 'dired-find-alternate-file 'disabled nil)
+(put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
