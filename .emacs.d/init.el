@@ -37,7 +37,7 @@
 
 ;; smooth scrolling
 (setq scroll-step 1
-      scroll-margin 7
+      scroll-margin 6
       scroll-conservatively 10000)
 
 ;; always type y instead of yes
@@ -87,7 +87,6 @@
    ("C-c C-=" . mc/mark-all-like-this))
   :config
   (setq mc/always-run-for-all t)
-  ;; (xah-fly-define-char "a" 'mc/mark-all-like-this)
   )
 
 ;; abbrev mode
@@ -134,7 +133,7 @@
 ;; manage popups easily
 (use-package shackle
   :config
-  (setq shackle-rules '((compilation-mode :noselect t :popup t :align 'below)
+  (setq shackle-rules '((compilation-mode :noselect t :popup t :align 'above)
                         (eshell-mode :select t :popup t :align 'above :size 0.2)
                         (helpful-mode :select t :popup t :align 'right :size 0.4)
                         (help-mode :select t :popup t :align 'below :size 0.4)
@@ -258,10 +257,6 @@
 
 
 ;;; Programming modes
-
-;; (use-package company-c-headers
-;;   :after company
-;;   :config (add-to-list 'company-backends 'company-c-headers))
 
 ;; git
 (use-package magit
@@ -419,8 +414,7 @@ on the tab bar instead."
     (save-excursion
       (if (equal (current-column) 0)
           (goto-char end)
-        (goto-char beg))
-      (sit-for blink-matching-delay))))
+        (goto-char beg)))))
 (global-set-key [remap kill-ring-save] 'my/kill-ring-save)
 (put 'kill-region 'interactive-form
      '(interactive
