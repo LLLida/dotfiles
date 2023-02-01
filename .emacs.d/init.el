@@ -37,7 +37,7 @@
 
 ;; smooth scrolling
 (setq scroll-step 1
-      scroll-margin 6
+      scroll-margin 3
       scroll-conservatively 10000)
 
 ;; always type y instead of yes
@@ -88,6 +88,18 @@
   :config
   (setq mc/always-run-for-all t)
   )
+
+;; hippie-expand
+(require 'hippie-exp)
+(global-set-key (kbd "M-/") #'hippie-expand)
+(setq hippie-expand-try-functions-list '(try-complete-file-name-partially
+                                         try-complete-file-name
+                                         try-expand-dabbrev
+                                         try-expand-list
+                                         try-expand-dabbrev-all-buffers
+                                         try-expand-dabbrev-from-kill))
+(add-to-list 'hippie-expand-ignore-buffers 'archive-mode)
+(add-to-list 'hippie-expand-ignore-buffers 'image-mode)
 
 ;; abbrev mode
 (require 'abbrev)
@@ -242,7 +254,11 @@
                          (mode . package-menu-mode)
                          (mode . fundamental-mode)
                          (mode . emacs-lisp-compilation-mode)))
-               ("org" (mode . org-mode))))))
+               ("org" (mode . org-mode))
+               ("C/C++" (or
+                         (mode . c-mode)
+                         (mode . c++-mode)))
+               ))))
 ;; Add icons to ibuffer
 (use-package all-the-icons-ibuffer
   :after (all-the-icons ibuffer)
@@ -262,9 +278,12 @@
 (use-package magit
   :commands (magit-status magit))
 
+;; Greate article for setting Emacs for C++
+;; https://tuhdo.github.io/c-ide.html
+
 ;; improve syntax highlighting in C-based modes
 ;; https://emacs.stackexchange.com/questions/16750/better-syntax-higlighting-for-member-variables-and-function-calls-in-cpp-mode
-(dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
+(dolist (mode-iter '(c-mode c++-mode glsl-mode))
   ;; constants
   (font-lock-add-keywords
     mode-iter
@@ -273,11 +292,6 @@
   (font-lock-add-keywords
     mode-iter
     '(("\\([_a-zA-Z][_a-zA-Z0-9]*\\)\s*(" 1 'font-lock-function-name-face keep)) t))
-
-;; (dolist (mode-iter '(c-mode c++-mode d-mode glsl-mode))
-;;   (font-lock-add-keywords
-;;     mode-iter
-;;     '(("\\<\[A-Z_\]\+\\>" 0 'font-lock-constant-face keep))))
 
 ;; some keybindings for c/c++
 (defun c-end-expression ()
@@ -296,6 +310,14 @@
 (bind-key "C-<return>" 'c-next-line c++-mode-map)
 
 (bind-key "C-x i" 'imenu)
+
+;; ggtags
+(use-package ggtags
+  :diminish
+  :hook (ggtags-mode . (lambda ()
+                         (setq-local hippie-expand-try-functions-list
+                                     (append hippie-expand-try-functions-list (list 'ggtags-try-complete-tag)))))
+  :bind (("M-s C-g" . ggtags-mode)))
 
 (defun my/smart-insert-parens (begin end)
   "Insert parens around marked region."
@@ -335,7 +357,8 @@
   :config
   (pdf-tools-install)
   (require 'dabbrev)
-  (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode))
+  (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode)
+  (add-to-list 'hippie-expand-ignore-buffers 'pdf-view-mode))
 
 
 ;;; UI
