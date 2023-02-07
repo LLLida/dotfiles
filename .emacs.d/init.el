@@ -9,7 +9,9 @@
 ;; setup use-package
 (setq package-check-signature nil
       package-native-compile t
-      package-enable-at-startup nil)
+      package-enable-at-startup nil
+      package-quickstart t)
+;; set package archives
 (setq package-archives
       '(("GNU ELPA"     . "https://elpa.gnu.org/packages/")
         ("MELPA"        . "https://melpa.org/packages/")
@@ -63,20 +65,19 @@
 ;; Easily switch between .cpp and .hpp files
 (global-set-key (kbd "M-o") 'ff-find-other-file)
 
-;; Delete trailing whitespaces and save buffer.
-(global-set-key [remap save-buffer] (lambda ()
-                                      (interactive)
-                                      (delete-trailing-whitespace)
-                                      (save-buffer)))
+;; Delete trailing whitespaces before save buffer.
+(add-hook 'before-save-hook 'whitespace-cleanup)
 
-;; save buffers between sessions
-(desktop-save-mode 1)
-(add-to-list 'desktop-modes-not-to-save 'Info-mode)
-(add-to-list 'desktop-modes-not-to-save 'info-lookup-mode)
-(add-to-list 'desktop-modes-not-to-save 'fundamental-mode)
+;; save minibuffer history
+(savehist-mode 1)
+
+;; disable suspend-frame bindings as I sometimes hit them accidentally
+(global-set-key (kbd "C-z") #'repeat)
+(global-set-key (kbd "C-x C-z") nil)
 
 
 ;;; Utilities
+
 ;; minimize information in mode line
 (use-package diminish)
 
@@ -91,15 +92,23 @@
 
 ;; hippie-expand
 (require 'hippie-exp)
-(global-set-key (kbd "M-/") #'hippie-expand)
+;; most of the time I use "M-/" (dabbrev-expand), but I happen to use hippie-expand too
+(global-set-key (kbd "C-/") #'hippie-expand)
 (setq hippie-expand-try-functions-list '(try-complete-file-name-partially
                                          try-complete-file-name
-                                         try-expand-dabbrev
                                          try-expand-list
-                                         try-expand-dabbrev-all-buffers
-                                         try-expand-dabbrev-from-kill))
+                                         try-expand-dabbrev
+                                         try-expand-dabbrev-from-kill
+                                         try-complete-lisp-symbol-partially
+                                         try-complete-lisp-symbol))
 (add-to-list 'hippie-expand-ignore-buffers 'archive-mode)
 (add-to-list 'hippie-expand-ignore-buffers 'image-mode)
+
+;; makes typing a lot easier
+(use-package fancy-dabbrev
+  :diminish
+  :config
+  (global-fancy-dabbrev-mode))
 
 ;; abbrev mode
 (require 'abbrev)
@@ -121,14 +130,16 @@
 
 ;; dired - the file manager
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
-;; Colorised dired
-(use-package diredfl
-  :after dired
-  :hook (dired-mode . diredfl-mode))
+
 ;; Collapse directories that only have 1 file
 (use-package dired-collapse
   :after dired
   :hook (dired-mode . dired-collapse-mode))
+
+;; use tab to expand directory at point
+(use-package dired-subtree
+  :bind (:map dired-mode-map
+              ("<tab>" . dired-subtree-cycle)))
 
 ;; proced - Emacs process manager
 ;; https://laurencewarne.github.io/emacs/programming/2022/12/26/exploring-proced.html
@@ -185,7 +196,6 @@
   ;; sort elements by history
   (require 'corfu-history)
   (corfu-history-mode)
-  (savehist-mode 1)
   (add-to-list 'savehist-additional-variables 'corfu-history))
 
 (use-package kind-icon
@@ -264,12 +274,7 @@
   :after (all-the-icons ibuffer)
   :config
   (all-the-icons-ibuffer-mode 1)
-  (setq all-the-icons-ibuffer-human-readable-size t))
-
-;; show additional information when completing commands
-(use-package marginalia
-  :config
-  (marginalia-mode))
+  (setq all-the-icons-ibuffer-human-readable-size t)) 
 
 
 ;;; Programming modes
@@ -314,10 +319,9 @@
 ;; ggtags
 (use-package ggtags
   :diminish
-  :hook (ggtags-mode . (lambda ()
-                         (setq-local hippie-expand-try-functions-list
-                                     (append hippie-expand-try-functions-list (list 'ggtags-try-complete-tag)))))
-  :bind (("M-s C-g" . ggtags-mode)))
+  :bind (("M-s C-g" . ggtags-mode))
+  :config
+  (add-to-list 'hippie-expand-try-functions-list 'ggtags-try-complete-tag t))
 
 (defun my/smart-insert-parens (begin end)
   "Insert parens around marked region."
@@ -395,8 +399,11 @@
 ;; (use-package kaolin-themes
 ;;   :config
 ;;   (load-theme 'kaolin-galaxy t)))
-(add-to-list 'custom-theme-load-path "~/.emacs.d/lisp")
-(load-theme 'naysayer t)
+(use-package ef-themes
+  :config
+  (load-theme 'ef-bio t))
+;; (add-to-list 'custom-theme-load-path "~/.emacs.d/lisp")
+;; (load-theme 'naysayer t)
 ;; (load-theme 'modus-vivendi t)
 
 ;; font
@@ -452,21 +459,11 @@ on the tab bar instead."
 (use-package telega
   :bind-keymap ("M-t" . telega-prefix-map)
   :config
-  ;; (setq telega-completing-read-function 'ivy-completing-read) ;; use ivy
   (setq telega-completing-read-function 'completing-read) ;; use builtin completion
   (require 'telega-mnz)
   (global-telega-mnz-mode t)
   (require 'telega-stories)
-  (telega-stories-mode t)
-  (defun my-telega-chat-mode ()
-    (set (make-local-variable 'company-backends)
-         (append (list 'telega-company-emoji
-                       'telega-company-username
-                       'telega-company-hashtag)
-                 (when (telega-chat-bot-p telega-chatbuf--chat)
-                   '(telega-company-botcmd))))
-    (company-mode 1))
-  (add-hook 'telega-chat-mode-hook 'my-telega-chat-mode))
+  (telega-stories-mode t))
 ;; don't forget to 'yay -S ttf-symbola'!
 (set-fontset-font t 'unicode "Symbola" nil 'append)
 
@@ -499,8 +496,7 @@ on the tab bar instead."
 
 ;; Org mode
 (setq org-catch-invisible-edits 'smart)
-;; Replace ... for hidden items with ↴
-(setq org-ellipsis " ↴")
+
 ;; Toggle emphasis markers
 (use-package org-appear
   :hook (org-mode . org-appear-mode)

@@ -90,10 +90,6 @@
 (exwm-input-set-key (kbd "C-<print>") 'screenshot-partial)
 (exwm-input-set-key (kbd "s-<print>") 'screenshot-window)
 
-;; disable suspend-frame bindings as I sometimes hit them accidentally
-(global-set-key (kbd "C-z") nil)
-(global-set-key (kbd "C-x C-z") nil)
-
 ;; Line-editing shortcuts
 (setq exwm-input-simulation-keys
       '(([?\C-b] . [left])
