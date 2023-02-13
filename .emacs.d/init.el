@@ -39,7 +39,7 @@
 
 ;; smooth scrolling
 (setq scroll-step 1
-      scroll-margin 3
+      scroll-margin 1
       scroll-conservatively 10000)
 
 ;; always type y instead of yes
@@ -75,6 +75,9 @@
 (global-set-key (kbd "C-z") #'repeat)
 (global-set-key (kbd "C-x C-z") nil)
 
+;; very useful
+(bind-key "M-z" #'pop-to-mark-command)
+
 
 ;;; Utilities
 
@@ -90,6 +93,15 @@
   (setq mc/always-run-for-all t)
   )
 
+;; A Velocyraptor Yanking
+;; This makes me feel like I'm teleporting across Emacs buffers
+(use-package avy
+  :bind
+  (("M-2" . avy-goto-char-2)
+   ("M-g g" . avy-goto-line)
+   ("M-g M-w" . avy-copy-line)
+   ("M-g C-w" . avy-kill-whole-line)))
+
 ;; hippie-expand
 (require 'hippie-exp)
 ;; most of the time I use "M-/" (dabbrev-expand), but I happen to use hippie-expand too
@@ -97,18 +109,11 @@
 (setq hippie-expand-try-functions-list '(try-complete-file-name-partially
                                          try-complete-file-name
                                          try-expand-list
-                                         try-expand-dabbrev
                                          try-expand-dabbrev-from-kill
                                          try-complete-lisp-symbol-partially
                                          try-complete-lisp-symbol))
 (add-to-list 'hippie-expand-ignore-buffers 'archive-mode)
 (add-to-list 'hippie-expand-ignore-buffers 'image-mode)
-
-;; makes typing a lot easier
-(use-package fancy-dabbrev
-  :diminish
-  :config
-  (global-fancy-dabbrev-mode))
 
 ;; abbrev mode
 (require 'abbrev)
@@ -154,14 +159,14 @@
   (setq-default proced-format 'long))
 
 ;; manage popups easily
-(use-package shackle
-  :config
-  (setq shackle-rules '((compilation-mode :noselect t :popup t :align 'above)
-                        (eshell-mode :select t :popup t :align 'above :size 0.2)
-                        (helpful-mode :select t :popup t :align 'right :size 0.4)
-                        (help-mode :select t :popup t :align 'below :size 0.4)
-                        ("\\`\\*Warnings.*?\\*\\'" :regexp t :popup t :align 'below :size 0.3)))
-  (shackle-mode))
+;; (use-package shackle
+;;   :config
+;;   (setq shackle-rules '((compilation-mode :noselect t :popup t :align 'above)
+;;                         (eshell-mode :select t :popup t :align 'above :size 0.2)
+;;                         (helpful-mode :select t :popup t :align 'right :size 0.4)
+;;                         (help-mode :select t :popup t :align 'below :size 0.4)
+;;                         ("\\`\\*Warnings.*?\\*\\'" :regexp t :popup t :align 'below :size 0.3)))
+;;   (shackle-mode))
 
 ;; display ^L as horizontal lines
 (use-package form-feed
@@ -227,10 +232,6 @@
 ;; (electric-pair-mode t)
 ;; (electric-indent-mode nil)
 
-;; compilation
-(require 'compile)
-(setq compilation-ask-about-save nil
-      compilation-window-height 14)
 ;; colored compilation buffer
 (use-package xterm-color
   :config
@@ -246,17 +247,11 @@
                                (ibuffer-switch-to-saved-filter-groups "default")))
 (setq ibuffer-saved-filter-groups
       (quote (("default"
+               ("C/C++" (or
+                         (mode . c-mode)
+                         (mode . c++-mode)
+                         (mode . glsl-mode)))
                ("dired" (mode . dired-mode))
-               ("telega" (or
-                          (mode . telega-root-mode)
-                          (mode . telega-chat-mode)))
-               ("erc" (or
-                       (mode . erc-mode)
-                       (mode . erc-list-menu-mode)))
-               ("planner" (or
-                           (name . "^\\*Calendar\\*$")
-                           (name . "^diary$")
-                           (mode . muse-mode)))
                ("emacs" (or
                          (name . "^\\*scratch\\*$")
                          (name . "^\\*Messages\\*$")
@@ -264,17 +259,42 @@
                          (mode . package-menu-mode)
                          (mode . fundamental-mode)
                          (mode . emacs-lisp-compilation-mode)))
+               ("telega" (or
+                          (mode . telega-root-mode)
+                          (mode . telega-chat-mode)))
                ("org" (mode . org-mode))
-               ("C/C++" (or
-                         (mode . c-mode)
-                         (mode . c++-mode)))
+               ("planner" (or
+                           (name . "^\\*Calendar\\*$")
+                           (name . "^diary$")
+                           (mode . muse-mode)))
+               ("erc" (or
+                       (mode . erc-mode)
+                       (mode . erc-list-menu-mode)))
                ))))
-;; Add icons to ibuffer
-(use-package all-the-icons-ibuffer
-  :after (all-the-icons ibuffer)
-  :config
-  (all-the-icons-ibuffer-mode 1)
-  (setq all-the-icons-ibuffer-human-readable-size t)) 
+
+;; highlight TODO keywords, hl-todo package seems very slow.
+;; We're using minad's suggestion instead
+;; https://github.com/tarsius/hl-todo/issues/61
+(defvar my/todo-keywords
+  '(("HOLD" . "#d0bf8f")
+    ("TODO" . "#cc9393")
+    ("NEXT" . "#dca3a3")
+    ("FAIL" . "#8c5353")
+    ("DONE" . "#afd8af")
+    ("NOTE"   . "#d0bf8f")
+    ("HACK"   . "#d0bf8f")
+    ("TEMP"   . "#d0bf8f")
+    ("FIXME"  . "#cc9393")
+    ))
+
+(defun my/todo-fontify ()
+  (unless (derived-mode-p 'org-mode)
+    (font-lock-add-keywords
+     nil
+     (mapcar (lambda (x)
+               `(,(concat "\\<" (car x) "\\>") 0 '(:weight bold :foreground ,(cdr x)) prepend))
+             my/todo-keywords))))
+(add-hook 'prog-mode-hook #'my/todo-fontify)
 
 
 ;;; Programming modes
@@ -313,8 +333,6 @@
   (newline-and-indent))
 (bind-key "C-<return>" 'c-next-line c-mode-map)
 (bind-key "C-<return>" 'c-next-line c++-mode-map)
-
-(bind-key "C-x i" 'imenu)
 
 ;; ggtags
 (use-package ggtags
@@ -471,6 +489,7 @@ on the tab bar instead."
 ;; https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-03.org
 (use-package mu4e
   :load-path "/usr/local/share/emacs/site-lisp/mu4e/"
+  :commands (mu4e)
   :config
   (setq mu4e-change-filenames-when-moving t
         mu4e-update-interval 1800
