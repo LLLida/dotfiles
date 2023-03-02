@@ -49,12 +49,15 @@
 (setq completion-ignore-case t
       completions-detailed t
       read-buffer-completion-ignore-case t
-      completion-styles '(basic substring flex))
+      completion-styles '(basic substring flex)
+      ;; from article https://www.scss.tcd.ie/~sulimanm/posts/default-emacs-completion.html
+      completions-format 'one-column
+      completions-max-height 40)
 (bind-key "C-n" 'minibuffer-next-completion minibuffer-mode-map)
 (bind-key "C-p" 'minibuffer-previous-completion minibuffer-mode-map)
 
-;; 16MB, default value is too small
-(setq gc-cons-threshold (* 16 1024 1024))
+;; default value is too small
+(setq gc-cons-threshold (* 8 1024 1024))
 
 (setq undo-limit (* 8 1024 1024))
 
@@ -75,6 +78,10 @@
 (global-set-key (kbd "C-z") #'repeat)
 (global-set-key (kbd "C-x C-z") nil)
 
+;; bind some search-replace commands to easier keybindings
+(bind-key "M-1" #'query-replace)
+(bind-key "M-2" #'replace-string)
+
 ;; very useful
 (bind-key "M-z" #'pop-to-mark-command)
 
@@ -92,15 +99,6 @@
   :config
   (setq mc/always-run-for-all t)
   )
-
-;; A Velocyraptor Yanking
-;; This makes me feel like I'm teleporting across Emacs buffers
-(use-package avy
-  :bind
-  (("M-2" . avy-goto-char-2)
-   ("M-g g" . avy-goto-line)
-   ("M-g M-w" . avy-copy-line)
-   ("M-g C-w" . avy-kill-whole-line)))
 
 ;; hippie-expand
 (require 'hippie-exp)
@@ -135,6 +133,7 @@
 
 ;; dired - the file manager
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
+(add-hook 'dired-mode-hook 'hl-line-mode)
 
 ;; Collapse directories that only have 1 file
 (use-package dired-collapse
@@ -180,9 +179,6 @@
 
 (use-package corfu
   :custom
-  (corfu-auto t)
-  (corfu-auto-prefix 2)
-  (corfu-auto-delay 0.25)
   (corfu-min-width 80)
   (corfu-max-width 120)
   (corfu-preview-current nil)
@@ -338,6 +334,8 @@
 (use-package ggtags
   :diminish
   :bind (("M-s C-g" . ggtags-mode))
+  :hook (ggtags-mode-hook . (lambda ()
+                              (eldoc-mode 1)))
   :config
   (add-to-list 'hippie-expand-try-functions-list 'ggtags-try-complete-tag t))
 
@@ -385,21 +383,6 @@
 
 ;;; UI
 
-;; Icons
-(when (display-graphic-p)
-  (use-package all-the-icons
-    :config
-    (when (display-graphic-p)
-      (unless (member "all-the-icons" (font-family-list))
-        (message "fonts for all-the-icons are not installed, "
-                 "please, install them via `all-the-icons-install-fonts'."))))
-  ;; Add icons to dired
-  (use-package all-the-icons-dired
-    :diminish
-    :hook (dired-mode . all-the-icons-dired-mode)
-    :config (setq all-the-icons-dired-monochrome nil))
-  )
-
 ;; Modeline
 (setq inhibit-compacting-font-caches t
       display-time-default-load-average nil
@@ -407,10 +390,8 @@
 (setq battery-mode-line-format "(%b%p%%)")
 (display-battery-mode t)
 (display-time)
-;; show region info in modeline
-(require 'modeline-region)
-(global-modeline-region-mode)
-;; cull mode which displays current function name in modeline
+
+;; cool mode which displays current function name in modeline
 ;; (which-function-mode 1)
 
 ;; theme
@@ -533,3 +514,4 @@ on the tab bar instead."
 (put 'dired-find-alternate-file 'disabled nil)
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+(put 'narrow-to-region 'disabled nil)
