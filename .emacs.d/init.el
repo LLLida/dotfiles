@@ -85,6 +85,11 @@
 ;; very useful
 (bind-key "M-z" #'pop-to-mark-command)
 
+(bind-key "C-x C-b" #'buffer-menu)
+
+;; do not confirm when killing buffer
+(bind-key [remap kill-buffer] #'kill-this-buffer)
+
 
 ;;; Utilities
 
@@ -134,6 +139,14 @@
 ;; dired - the file manager
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
 (add-hook 'dired-mode-hook 'hl-line-mode)
+;; took from https://github.com/protesilaos/dotfiles/blob/master/emacs/.emacs.d/prot-emacs-modules/prot-emacs-dired.el
+(setq dired-recursive-copies 'always
+      dired-listing-switches "-AGFhlv --group-directories-first --time-style=long-iso")
+;; Emacs 29
+(setq dired-make-directory-clickable t
+      dired-free-space nil
+      dired-mouse-drag-files t)
+(bind-key "C-x v v" #'dired-vc-next-action dired-mode-map)
 
 ;; Collapse directories that only have 1 file
 (use-package dired-collapse
@@ -157,16 +170,6 @@
         proced-enable-color-flag t)
   (setq-default proced-format 'long))
 
-;; manage popups easily
-;; (use-package shackle
-;;   :config
-;;   (setq shackle-rules '((compilation-mode :noselect t :popup t :align 'above)
-;;                         (eshell-mode :select t :popup t :align 'above :size 0.2)
-;;                         (helpful-mode :select t :popup t :align 'right :size 0.4)
-;;                         (help-mode :select t :popup t :align 'below :size 0.4)
-;;                         ("\\`\\*Warnings.*?\\*\\'" :regexp t :popup t :align 'below :size 0.3)))
-;;   (shackle-mode))
-
 ;; display ^L as horizontal lines
 (use-package form-feed
   :diminish
@@ -174,38 +177,6 @@
 
 ;; setup eshell
 (global-set-key (kbd "C-:") #'project-eshell)
-(add-hook 'eshell-mode-hook (lambda ()
-                              (setq-local mode-line-format nil)))
-
-(use-package corfu
-  :custom
-  (corfu-min-width 80)
-  (corfu-max-width 120)
-  (corfu-preview-current nil)
-  :hook
-  ;; disable corfu for gud-mode, https://github.com/minad/corfu/issues/157
-  (gud-mode . (lambda () (corfu-mode -1)))
-  ;; enable corfu for eglot and Emacs lisp
-  ((eglot-managed-mode . emacs-lisp-mode) . (lambda () (corfu-mode 1)))
-  :config
-  ;; (global-corfu-mode)
-  ;; show nice documentation popup
-  (require 'corfu-popupinfo)
-  (corfu-popupinfo-mode)
-  (setq corfu-popupinfo-max-height 50
-        corfu-popupinfo-delay 0.5)
-  ;; sort elements by history
-  (require 'corfu-history)
-  (corfu-history-mode)
-  (add-to-list 'savehist-additional-variables 'corfu-history))
-
-(use-package kind-icon
-  :ensure t
-  :after corfu
-  :custom
-  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
-  :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
 ;; displays available keys if you forgot one of them
 (use-package which-key
@@ -268,6 +239,13 @@
                        (mode . erc-list-menu-mode)))
                ))))
 
+
+;;; Programming modes
+
+;; git
+(use-package magit
+  :commands (magit-status magit))
+
 ;; highlight TODO keywords, hl-todo package seems very slow.
 ;; We're using minad's suggestion instead
 ;; https://github.com/tarsius/hl-todo/issues/61
@@ -282,7 +260,6 @@
     ("TEMP"   . "#d0bf8f")
     ("FIXME"  . "#cc9393")
     ))
-
 (defun my/todo-fontify ()
   (unless (derived-mode-p 'org-mode)
     (font-lock-add-keywords
@@ -292,14 +269,7 @@
              my/todo-keywords))))
 (add-hook 'prog-mode-hook #'my/todo-fontify)
 
-
-;;; Programming modes
-
-;; git
-(use-package magit
-  :commands (magit-status magit))
-
-;; Greate article for setting Emacs for C++
+;; Greate article for setting Emacs for C/C++
 ;; https://tuhdo.github.io/c-ide.html
 
 ;; improve syntax highlighting in C-based modes
@@ -364,12 +334,6 @@
          ("\\.glsl\\'" . glsl-mode))
   :config
   (bind-key "C-<return>" 'c-next-line glsl-mode-map))
-
-(use-package d-mode
-  :mode ("\\.d\\'" . d-mode)
-  :config
-  (bind-key "C-<return>" 'c-next-line d-mode-map)
-  (bind-key "C-;" 'c-end-expression d-mode-map))
 
 ;; view pdf files
 (use-package pdf-tools
