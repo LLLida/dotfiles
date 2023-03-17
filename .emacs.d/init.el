@@ -58,6 +58,7 @@
 
 ;; default value is too small
 (setq gc-cons-threshold (* 8 1024 1024))
+(setq read-process-output-max (* 1024 1024))
 
 (setq undo-limit (* 8 1024 1024))
 
@@ -74,6 +75,9 @@
 ;; save minibuffer history
 (savehist-mode 1)
 
+;; show column number in minibuffer
+(column-number-mode 1)
+
 ;; disable suspend-frame bindings as I sometimes hit them accidentally
 (global-set-key (kbd "C-z") #'repeat)
 (global-set-key (kbd "C-x C-z") nil)
@@ -82,13 +86,21 @@
 (bind-key "M-1" #'query-replace)
 (bind-key "M-2" #'replace-string)
 
-;; very useful
-(bind-key "M-z" #'pop-to-mark-command)
-
 (bind-key "C-x C-b" #'buffer-menu)
 
 ;; do not confirm when killing buffer
 (bind-key [remap kill-buffer] #'kill-this-buffer)
+
+;; *-dwim is better than *-word
+(bind-key "M-u" #'upcase-dwim)
+(bind-key "M-c" #'capitalize-dwim)
+(bind-key "M-l" #'downcase-dwim)
+
+;; use f7 for reading documents
+(bind-key "<f7>" #'scroll-lock-mode)
+
+;; smooth scrolling (Emacs 29)
+(pixel-scroll-precision-mode 1)
 
 
 ;;; Utilities
@@ -104,6 +116,19 @@
   :config
   (setq mc/always-run-for-all t)
   )
+
+;; my fingers love this package
+(use-package key-chord
+  :config
+  (key-chord-mode 1)
+  (key-chord-define-global "zz" 'delete-other-windows)
+  (key-chord-define-global "qq" 'beginning-of-buffer)
+  (key-chord-define-global "ww" (kbd "C-u C-SPC"))
+  (key-chord-define-global "kj" 'imenu)
+  (key-chord-define-global "jj" 'dired-jump)
+  ;; I was searching for something like that for years...
+  (key-chord-define c-mode-base-map ".." "->")
+  (key-chord-define c-mode-base-map "!+" "!="))
 
 ;; hippie-expand
 (require 'hippie-exp)
@@ -176,7 +201,8 @@
   :hook (emacs-lisp-mode . form-feed-mode))
 
 ;; setup eshell
-(global-set-key (kbd "C-:") #'project-eshell)
+(bind-key "C-:" #'project-eshell)
+(bind-key "C-:" #'previous-buffer eshell-mode-map)
 
 ;; displays available keys if you forgot one of them
 (use-package which-key
@@ -250,7 +276,7 @@
 ;; We're using minad's suggestion instead
 ;; https://github.com/tarsius/hl-todo/issues/61
 (defvar my/todo-keywords
-  '(("HOLD" . "#d0bf8f")
+  '(("CLEANUP" . "#b0af6f")
     ("TODO" . "#cc9393")
     ("NEXT" . "#dca3a3")
     ("FAIL" . "#8c5353")
@@ -304,10 +330,16 @@
 (use-package ggtags
   :diminish
   :bind (("M-s C-g" . ggtags-mode))
-  :hook (ggtags-mode-hook . (lambda ()
-                              (eldoc-mode 1)))
   :config
   (add-to-list 'hippie-expand-try-functions-list 'ggtags-try-complete-tag t))
+
+(use-package company
+  :init
+  (setq company-idle-delay nil
+        company-require-match nil
+        company-tooltip-minimum-width 60)
+  :config (global-company-mode)
+  :bind (("C-." . )))
 
 (defun my/smart-insert-parens (begin end)
   "Insert parens around marked region."
@@ -356,15 +388,18 @@
 (display-time)
 
 ;; cool mode which displays current function name in modeline
-;; (which-function-mode 1)
+(which-function-mode 1)
 
 ;; theme
+(use-package yoshi-theme
+  :config
+  (load-theme 'yoshi t))
 ;; (use-package kaolin-themes
 ;;   :config
 ;;   (load-theme 'kaolin-galaxy t)))
-(use-package ef-themes
-  :config
-  (load-theme 'ef-bio t))
+;; (use-package ef-themes
+;;   :config
+;;   (load-theme 'ef-bio t))
 ;; (add-to-list 'custom-theme-load-path "~/.emacs.d/lisp")
 ;; (load-theme 'naysayer t)
 ;; (load-theme 'modus-vivendi t)
@@ -418,9 +453,13 @@ on the tab bar instead."
 
 ;;; Misc
 
+;; make Emacs work with russian keyboard (need to install reverse-im package)
+;; (setq reverse-im-input-methods '("russian-computer"))
+;; (reverse-im-mode t)
+
 ;; telegram
 (use-package telega
-  :bind-keymap ("M-t" . telega-prefix-map)
+  :bind-keymap ("C-c t" . telega-prefix-map)
   :config
   (setq telega-completing-read-function 'completing-read) ;; use builtin completion
   (require 'telega-mnz)
@@ -461,11 +500,10 @@ on the tab bar instead."
 ;; Org mode
 (setq org-catch-invisible-edits 'smart)
 
-;; Toggle emphasis markers
-(use-package org-appear
-  :hook (org-mode . org-appear-mode)
-  :config
-  (setq org-appear-autolinks t))
+;; (org-babel-do-load-languages
+;;  'org-babel-load-languages
+;;  '((calc . t)
+;;    (python . t)))
 
 ;; music in emacs
 (require 'lida-music)
