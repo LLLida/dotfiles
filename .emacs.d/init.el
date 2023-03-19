@@ -117,18 +117,27 @@
   (setq mc/always-run-for-all t)
   )
 
+(defun my/beg-end-of-buffer ()
+  "Move to the beginning or to the end of buffer."
+  (interactive)
+  (if (= (point) 1)
+      (end-of-buffer)
+    (beginning-of-buffer)))
+
 ;; my fingers love this package
 (use-package key-chord
   :config
   (key-chord-mode 1)
-  (key-chord-define-global "zz" 'delete-other-windows)
-  (key-chord-define-global "qq" 'beginning-of-buffer)
+  (key-chord-define-global "qq" 'my/beg-end-of-buffer)
   (key-chord-define-global "ww" (kbd "C-u C-SPC"))
   (key-chord-define-global "kj" 'imenu)
   (key-chord-define-global "jj" 'dired-jump)
+  (key-chord-define-global "fd" 'bookmark-jump)
   ;; I was searching for something like that for years...
+  (require 'cc-mode)
   (key-chord-define c-mode-base-map ".." "->")
-  (key-chord-define c-mode-base-map "!+" "!="))
+  (key-chord-define c-mode-base-map "!+" "!=")
+  (key-chord-define c-mode-base-map ";;" (kbd "C-e ;")))
 
 ;; hippie-expand
 (require 'hippie-exp)
@@ -171,7 +180,6 @@
 (setq dired-make-directory-clickable t
       dired-free-space nil
       dired-mouse-drag-files t)
-(bind-key "C-x v v" #'dired-vc-next-action dired-mode-map)
 
 ;; Collapse directories that only have 1 file
 (use-package dired-collapse
@@ -202,7 +210,6 @@
 
 ;; setup eshell
 (bind-key "C-:" #'project-eshell)
-(bind-key "C-:" #'previous-buffer eshell-mode-map)
 
 ;; displays available keys if you forgot one of them
 (use-package which-key
@@ -311,14 +318,7 @@
     '(("\\([_a-zA-Z][_a-zA-Z0-9]*\\)\s*(" 1 'font-lock-function-name-face keep)) t))
 
 ;; some keybindings for c/c++
-(defun c-end-expression ()
-  (interactive)
-  (save-excursion
-    (move-end-of-line nil)
-    (insert ";")))
 (require 'cc-mode)
-(bind-key "C-;" 'c-end-expression c-mode-map)
-(bind-key "C-;" 'c-end-expression c++-mode-map)
 (defun c-next-line ()
   (interactive)
   (move-end-of-line nil)
@@ -339,7 +339,7 @@
         company-require-match nil
         company-tooltip-minimum-width 60)
   :config (global-company-mode)
-  :bind (("C-." . )))
+  :bind (("C-." . company-complete)))
 
 (defun my/smart-insert-parens (begin end)
   "Insert parens around marked region."
@@ -386,9 +386,6 @@
 (setq battery-mode-line-format "(%b%p%%)")
 (display-battery-mode t)
 (display-time)
-
-;; cool mode which displays current function name in modeline
-(which-function-mode 1)
 
 ;; theme
 (use-package yoshi-theme
@@ -459,7 +456,7 @@ on the tab bar instead."
 
 ;; telegram
 (use-package telega
-  :bind-keymap ("C-c t" . telega-prefix-map)
+  :bind-keymap ("M-t" . telega-prefix-map)
   :config
   (setq telega-completing-read-function 'completing-read) ;; use builtin completion
   (require 'telega-mnz)
