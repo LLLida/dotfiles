@@ -85,6 +85,8 @@
 ;; bind some search-replace commands to easier keybindings
 (bind-key "M-1" #'query-replace)
 (bind-key "M-2" #'replace-string)
+(bind-key "M-3" #'rgrep)
+(bind-key "M-9" #'bookmark-jump)
 
 (bind-key "C-x C-b" #'buffer-menu)
 
@@ -101,6 +103,9 @@
 
 ;; smooth scrolling (Emacs 29)
 (pixel-scroll-precision-mode 1)
+
+;; enhance isearch
+(setq isearch-lazy-count t)
 
 
 ;;; Utilities
@@ -128,11 +133,8 @@
 (use-package key-chord
   :config
   (key-chord-mode 1)
-  (key-chord-define-global "qq" 'my/beg-end-of-buffer)
-  (key-chord-define-global "ww" (kbd "C-u C-SPC"))
+  (key-chord-define-global "qq" (kbd "C-u C-SPC"))
   (key-chord-define-global "kj" 'imenu)
-  (key-chord-define-global "jj" 'dired-jump)
-  (key-chord-define-global "fd" 'bookmark-jump)
   ;; I was searching for something like that for years...
   (require 'cc-mode)
   (key-chord-define c-mode-base-map ".." "->")
@@ -233,13 +235,13 @@
 ;; (electric-indent-mode nil)
 
 ;; colored compilation buffer
-(use-package xterm-color
-  :config
-  (setq comint-output-filter-functions (remove 'ansi-color-process-output comint-output-filter-functions)
-        compilation-scroll-output 'first-error)
-  (setq compilation-environment '("TERM=xterm-256color"))
-  (advice-add 'compilation-filter :around #'(lambda (f proc string)
-                                              (funcall f proc (xterm-color-filter string)))))
+;; (use-package xterm-color
+;;   :config
+;;   (setq comint-output-filter-functions (remove 'ansi-color-process-output comint-output-filter-functions)
+;;         compilation-scroll-output 'first-error)
+;;   (setq compilation-environment '("TERM=xterm-256color"))
+;;   (advice-add 'compilation-filter :around #'(lambda (f proc string)
+;;                                               (funcall f proc (xterm-color-filter string)))))
 
 ;; ibuffer
 (require 'ibuffer)
