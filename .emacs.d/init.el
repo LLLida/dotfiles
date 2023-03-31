@@ -82,13 +82,28 @@
 (global-set-key (kbd "C-z") #'repeat)
 (global-set-key (kbd "C-x C-z") nil)
 
-;; bind some search-replace commands to easier keybindings
-(bind-key "M-1" #'query-replace)
-(bind-key "M-2" #'replace-string)
-(bind-key "M-3" #'rgrep)
-(bind-key "M-9" #'bookmark-jump)
+(bind-key "M-#" #'rgrep)
+(bind-key "M-*" #'bookmark-jump)
 
+;; I use control for specifying prefix argument
+;; so why not bind some useful things to easier keybindings
+(dolist (bind-iter '(("1" "!")
+                     ("2" "@")
+                     ("3" "#")
+                     ("4" "$")
+                     ("5" "%")
+                     ("6" "^")
+                     ("7" "&")
+                     ("8" "*")
+                     ("9" "(")
+                     ("0" ")")))
+  (define-key key-translation-map (kbd (concat "M-" (car bind-iter))) (kbd (concat "M-" (cadr bind-iter)))))
+
+;; buffer-menu > buffer-list
 (bind-key "C-x C-b" #'buffer-menu)
+
+;; Make C-j jump to previous mark regardless of which mode we're in
+(bind-key "C-j" #'pop-to-mark-command)
 
 ;; do not confirm when killing buffer
 (bind-key [remap kill-buffer] #'kill-this-buffer)
@@ -122,18 +137,10 @@
   (setq mc/always-run-for-all t)
   )
 
-(defun my/beg-end-of-buffer ()
-  "Move to the beginning or to the end of buffer."
-  (interactive)
-  (if (= (point) 1)
-      (end-of-buffer)
-    (beginning-of-buffer)))
-
 ;; my fingers love this package
 (use-package key-chord
   :config
   (key-chord-mode 1)
-  (key-chord-define-global "qq" (kbd "C-u C-SPC"))
   (key-chord-define-global "kj" 'imenu)
   ;; I was searching for something like that for years...
   (require 'cc-mode)
@@ -168,10 +175,6 @@
                                (if (search-backward cursor last-abbrev-location t)
                                    (delete-char (length cursor))))))))
 
-;; mark things very fast
-(use-package expand-region
-  :bind (("C-=" . er/expand-region)))
-
 ;; dired - the file manager
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
 (add-hook 'dired-mode-hook 'hl-line-mode)
@@ -188,10 +191,10 @@
   :after dired
   :hook (dired-mode . dired-collapse-mode))
 
-;; use tab to expand directory at point
-(use-package dired-subtree
-  :bind (:map dired-mode-map
-              ("<tab>" . dired-subtree-cycle)))
+(use-package avy
+  :bind (("M-j" . avy-goto-char-timer)
+         ("C-c M-w" . avy-copy-line)
+         ("C-c C-w" . avy-kill-whole-line)))
 
 ;; proced - Emacs process manager
 ;; https://laurencewarne.github.io/emacs/programming/2022/12/26/exploring-proced.html
@@ -336,6 +339,7 @@
   (add-to-list 'hippie-expand-try-functions-list 'ggtags-try-complete-tag t))
 
 (use-package company
+  :diminish
   :init
   (setq company-idle-delay nil
         company-require-match nil
@@ -343,19 +347,7 @@
   :config (global-company-mode)
   :bind (("C-." . company-complete)))
 
-(defun my/smart-insert-parens (begin end)
-  "Insert parens around marked region."
-  (interactive (if (use-region-p)
-                   (list (region-beginning) (region-end))
-                 (list (point) (point))))
-  (save-excursion
-    (goto-char begin)
-    (insert "(")
-    (goto-char (+ 1 end))
-    (insert ")"))
-  (unless (use-region-p)
-    (forward-char)))
-(bind-key "C-(" 'my/smart-insert-parens)
+(bind-key "C-(" #'insert-parentheses)
 
 ;; syntax highlighting for cmake
 (use-package cmake-mode)
@@ -417,12 +409,6 @@
 ;; move global data in modeline(such as time or battery status) to tab bar.
 (setq lida/global-mode-string '("" display-time-string battery-mode-line-string))
 (defun lida/tab-bar-format-global ()
-  "Produce display of `global-mode-string' in the tab bar.
-When `tab-bar-format-global' is added to `tab-bar-format'
-(possibly appended after `tab-bar-format-align-right'),
-then modes that display information on the mode line
-using `global-mode-string' will display the same text
-on the tab bar instead."
   `((global menu-item ,(string-trim-right (format-mode-line lida/global-mode-string)) ignore)))
 (setq tab-bar-format '(tab-bar-format-history
                        tab-bar-format-tabs
