@@ -122,6 +122,9 @@
 ;; enhance isearch
 (setq isearch-lazy-count t)
 
+;; I love this command
+(bind-key "C-c =" #'align-regexp)
+
 
 ;;; Utilities
 
