@@ -6,24 +6,48 @@
 (setq user-full-name "Adil Mokhammad"
       user-mail-address "0adilmohammad0@gmail.com")
 
-;; setup use-package
-(setq package-check-signature nil
-      package-native-compile t
-      package-enable-at-startup nil
-      package-quickstart t)
-;; set package archives
-(setq package-archives
-      '(("GNU ELPA"     . "https://elpa.gnu.org/packages/")
-        ("MELPA"        . "https://melpa.org/packages/")
-        ("MELPA-STABLE" . "https://stable.melpa.org/packages/")))
-(package-initialize)
-;; Ensure that we have use-package
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-(setq use-package-verbose t
-      use-package-always-ensure t
-      use-package-ignore-unknown-keywords t)
+(defvar elpaca-installer-version 0.4)
+(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                              :ref nil
+                              :files (:defaults (:exclude "extensions"))
+                              :build (:not elpaca--activate-package)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
+  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (unless (file-exists-p repo)
+    (make-directory repo t)
+    (when (< emacs-major-version 28) (require 'subr-x))
+    (condition-case-unless-debug err
+        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                 ((zerop (call-process "git" nil buffer t "clone"
+                                       (plist-get order :repo) repo)))
+                 ((zerop (call-process "git" nil buffer t "checkout"
+                                       (or (plist-get order :ref) "--"))))
+                 (emacs (concat invocation-directory invocation-name))
+                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                 ((require 'elpaca))
+                 ((elpaca-generate-autoloads "elpaca" repo)))
+            (kill-buffer buffer)
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (unless (require 'elpaca-autoloads nil t)
+    (require 'elpaca)
+    (elpaca-generate-autoloads "elpaca" repo)
+    (load "./elpaca-autoloads")))
+(add-hook 'after-init-hook #'elpaca-process-queues)
+(elpaca `(,@elpaca-order))
+(elpaca elpaca-use-package
+  ;; Enable :elpaca use-package keyword.
+  (elpaca-use-package-mode)
+  ;; Assume :elpaca t unless otherwise specified.
+  (setq elpaca-use-package-by-default t))
+(elpaca-wait)
 
 ;; set load path
 (add-to-list 'load-path "~/.emacs.d/lisp/")
@@ -154,7 +178,8 @@
 
 ;; abbrev mode
 (require 'abbrev)
-(diminish 'abbrev-mode)
+(add-hook 'elpaca-after-init-hook (lambda ()
+                                    (diminish 'abbrev-mode)))
 (add-hook 'org-mode-hook 'abbrev-mode)
 (setq save-abbrevs 'silently)
 ;; Place @@ in your abbreviation and it will place cursor there!
@@ -190,16 +215,12 @@
 
 ;; proced - Emacs process manager
 ;; https://laurencewarne.github.io/emacs/programming/2022/12/26/exploring-proced.html
-(use-package proced
-  :ensure nil
-  :commands proced
-  :hook (proced-mode . hl-line-mode)
-  :config
-  ;; this significantly slows Emacs if proced buffer stays open
-  ;; (setq-default proced-auto-update-flag t)
-  (setq proced-goal-attribute nil
-        proced-enable-color-flag t)
-  (setq-default proced-format 'long))
+(add-hook 'proced-mode-hook #'hl-line-mode)
+;; this significantly slows Emacs if proced buffer stays open
+;; (setq-default proced-auto-update-flag t)
+(setq proced-goal-attribute nil
+      proced-enable-color-flag t)
+(setq-default proced-format 'long)
 
 ;; display ^L as horizontal lines
 (use-package form-feed
@@ -216,7 +237,8 @@
   (which-key-mode))
 
 ;; documentation
-(diminish 'eldoc-mode)
+(add-hook 'elpaca-after-init-hook (lambda ()
+                                    (diminish 'eldoc-mode)))
 (global-eldoc-mode 1)
 
 ;; indent
@@ -353,18 +375,8 @@
 (display-time)
 
 ;; theme
-(use-package zenburn-theme
-  :config
-  (load-theme 'zenburn t))
-;; (use-package kaolin-themes
-;;   :config
-;;   (load-theme 'kaolin-galaxy t)))
-;; (use-package ef-themes
-;;   :config
-;;   (load-theme 'ef-bio t))
-;; (add-to-list 'custom-theme-load-path "~/.emacs.d/lisp")
-;; (load-theme 'naysayer t)
-;; (load-theme 'modus-vivendi t)
+(use-package standard-themes
+  :config (load-theme 'standard-dark t))
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
@@ -428,6 +440,7 @@
 ;; mail with mu4e(don't forget to do 'yay -S mu'!)
 ;; https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-03.org
 (use-package mu4e
+  :elpaca nil
   :load-path "/usr/local/share/emacs/site-lisp/mu4e/"
   :commands (mu4e)
   :config
