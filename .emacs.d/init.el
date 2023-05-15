@@ -57,7 +57,7 @@
 (bind-key "C-p" 'minibuffer-previous-completion minibuffer-mode-map)
 
 ;; default value is too small
-(setq gc-cons-threshold (* 8 1024 1024))
+(setq gc-cons-threshold (* 4 1024 1024))
 (setq read-process-output-max (* 1024 1024))
 
 (setq undo-limit (* 8 1024 1024))
@@ -101,9 +101,7 @@
 
 ;; buffer-menu > buffer-list
 (bind-key "C-x C-b" #'buffer-menu)
-
-;; Make C-j jump to previous mark regardless of which mode we're in
-(bind-key "C-j" #'pop-to-mark-command)
+(add-hook 'Buffer-menu-mode-hook 'hl-line-mode)
 
 ;; do not confirm when killing buffer
 (bind-key [remap kill-buffer] #'kill-this-buffer)
@@ -122,8 +120,12 @@
 ;; enhance isearch
 (setq isearch-lazy-count t)
 
-;; I love this command
+;; I love this commands
+(bind-key "C-c -" #'align)
+(bind-key "C-c 0" #'align-current)
 (bind-key "C-c =" #'align-regexp)
+
+(bind-key "C-(" #'insert-parentheses)
 
 
 ;;; Utilities
@@ -144,25 +146,11 @@
 (use-package key-chord
   :config
   (key-chord-mode 1)
-  (key-chord-define-global "kj" 'imenu)
   ;; I was searching for something like that for years...
   (require 'cc-mode)
   (key-chord-define c-mode-base-map ".." "->")
   (key-chord-define c-mode-base-map "!+" "!=")
   (key-chord-define c-mode-base-map ";;" (kbd "C-e ;")))
-
-;; hippie-expand
-(require 'hippie-exp)
-;; most of the time I use "M-/" (dabbrev-expand), but I happen to use hippie-expand too
-(global-set-key (kbd "C-/") #'hippie-expand)
-(setq hippie-expand-try-functions-list '(try-complete-file-name-partially
-                                         try-complete-file-name
-                                         try-expand-list
-                                         try-expand-dabbrev-from-kill
-                                         try-complete-lisp-symbol-partially
-                                         try-complete-lisp-symbol))
-(add-to-list 'hippie-expand-ignore-buffers 'archive-mode)
-(add-to-list 'hippie-expand-ignore-buffers 'image-mode)
 
 ;; abbrev mode
 (require 'abbrev)
@@ -189,21 +177,23 @@
       dired-free-space nil
       dired-mouse-drag-files t)
 
-;; Collapse directories that only have 1 file
-(use-package dired-collapse
-  :after dired
-  :hook (dired-mode . dired-collapse-mode))
+;; Give dired highlighting
+(use-package diredfl
+  :hook (dired-mode  . diredfl-mode))
 
 (use-package avy
   :bind (("M-j" . avy-goto-char-timer)
          ("C-c M-w" . avy-copy-line)
-         ("C-c C-w" . avy-kill-whole-line)))
+         ("C-c C-w" . avy-kill-whole-line)
+         :map isearch-mode-map
+         ("M-j" . avy-isearch)))
 
 ;; proced - Emacs process manager
 ;; https://laurencewarne.github.io/emacs/programming/2022/12/26/exploring-proced.html
 (use-package proced
   :ensure nil
   :commands proced
+  :hook (proced-mode . hl-line-mode)
   :config
   ;; this significantly slows Emacs if proced buffer stays open
   ;; (setq-default proced-auto-update-flag t)
@@ -239,15 +229,6 @@
 (setq show-paren-style 'mixed);; highlight brackets if visible, else entire expression
 ;; (electric-pair-mode t)
 ;; (electric-indent-mode nil)
-
-;; colored compilation buffer
-;; (use-package xterm-color
-;;   :config
-;;   (setq comint-output-filter-functions (remove 'ansi-color-process-output comint-output-filter-functions)
-;;         compilation-scroll-output 'first-error)
-;;   (setq compilation-environment '("TERM=xterm-256color"))
-;;   (advice-add 'compilation-filter :around #'(lambda (f proc string)
-;;                                               (funcall f proc (xterm-color-filter string)))))
 
 ;; ibuffer
 (require 'ibuffer)
@@ -334,13 +315,6 @@
 (bind-key "C-<return>" 'c-next-line c-mode-map)
 (bind-key "C-<return>" 'c-next-line c++-mode-map)
 
-;; ggtags
-(use-package ggtags
-  :diminish
-  :bind (("M-s C-g" . ggtags-mode))
-  :config
-  (add-to-list 'hippie-expand-try-functions-list 'ggtags-try-complete-tag t))
-
 (use-package company
   :diminish
   :init
@@ -349,11 +323,6 @@
         company-tooltip-minimum-width 60)
   :config (global-company-mode)
   :bind (("C-." . company-complete)))
-
-(bind-key "C-(" #'insert-parentheses)
-
-;; syntax highlighting for cmake
-(use-package cmake-mode)
 
 (use-package glsl-mode
   :mode (("\\.vert\\'" . glsl-mode)
@@ -370,8 +339,7 @@
   :config
   (pdf-tools-install)
   (require 'dabbrev)
-  (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode)
-  (add-to-list 'hippie-expand-ignore-buffers 'pdf-view-mode))
+  (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode))
 
 
 ;;; UI
@@ -385,9 +353,9 @@
 (display-time)
 
 ;; theme
-(use-package yoshi-theme
+(use-package zenburn-theme
   :config
-  (load-theme 'yoshi t))
+  (load-theme 'zenburn t))
 ;; (use-package kaolin-themes
 ;;   :config
 ;;   (load-theme 'kaolin-galaxy t)))
@@ -454,8 +422,8 @@
   (global-telega-mnz-mode t)
   (require 'telega-stories)
   (telega-stories-mode t))
-;; don't forget to 'yay -S ttf-symbola'!
-(set-fontset-font t 'unicode "Symbola" nil 'append)
+;; It seems like modern Emacs has it's own emoji support
+;; (set-fontset-font t 'unicode "Symbola" nil 'append)
 
 ;; mail with mu4e(don't forget to do 'yay -S mu'!)
 ;; https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-03.org
