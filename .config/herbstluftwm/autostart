@@ -24,7 +24,7 @@ hc keybind $Mod-Shift-r reload
 hc keybind $Mod-q close
 hc keybind $Mod-Return spawn $myTerm
 hc keybind $Mod-e spawn $myEditor
-hc keybind $Mod-d spawn dmenu_run # TODO: command flags to make dmenu nicer
+hc keybind $Mod-d spawn dmenu_run -nb '#222222' -sb '#345F0C'
 hc keybind $Mod-Shift-Return spawn pcmanfm
 
 # basic movement in tiling and floating mode
