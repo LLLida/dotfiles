@@ -6,48 +6,20 @@
 (setq user-full-name "Adil Mokhammad"
       user-mail-address "0adilmohammad0@gmail.com")
 
-(defvar elpaca-installer-version 0.4)
-(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
-(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil
-                              :files (:defaults (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-       (build (expand-file-name "elpaca/" elpaca-builds-directory))
-       (order (cdr elpaca-order))
-       (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
-  (unless (file-exists-p repo)
-    (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
-    (condition-case-unless-debug err
-        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                 ((zerop (call-process "git" nil buffer t "clone"
-                                       (plist-get order :repo) repo)))
-                 ((zerop (call-process "git" nil buffer t "checkout"
-                                       (or (plist-get order :ref) "--"))))
-                 (emacs (concat invocation-directory invocation-name))
-                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                 ((require 'elpaca))
-                 ((elpaca-generate-autoloads "elpaca" repo)))
-            (kill-buffer buffer)
-          (error "%s" (with-current-buffer buffer (buffer-string))))
-      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-  (unless (require 'elpaca-autoloads nil t)
-    (require 'elpaca)
-    (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads")))
-(add-hook 'after-init-hook #'elpaca-process-queues)
-(elpaca `(,@elpaca-order))
-(elpaca elpaca-use-package
-  ;; Enable :elpaca use-package keyword.
-  (elpaca-use-package-mode)
-  ;; Assume :elpaca t unless otherwise specified.
-  (setq elpaca-use-package-by-default t))
-(elpaca-wait)
+;; setup package.el
+(setq package-check-signature nil
+      package-native-compile t
+      package-enable-at-startup nil
+      package-quickstart t)
+(package-initialize)
+;; set package archives
+(setq package-archives
+      '(("GNU ELPA"     . "https://elpa.gnu.org/packages/")
+        ("MELPA"        . "https://melpa.org/packages/")
+        ("MELPA-STABLE" . "https://stable.melpa.org/packages/")
+        ("NON GNU ELPA" . "https://elpa.nongnu.org/nongnu/")))
+(setq use-package-verbose t
+      use-package-ignore-unknown-keywords t)
 
 ;; set load path
 (add-to-list 'load-path "~/.emacs.d/lisp/")
@@ -90,17 +62,14 @@
 ;; so we can just run emacsclient -c in other frames with the same emacs instance
 (server-start)
 
-;; Easily switch between .cpp and .hpp files
-(global-set-key (kbd "M-o") 'ff-find-other-file)
-
-;; Delete trailing whitespaces before save buffer.
+;; Delete trailing whitespaces before saving buffer
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
-;; save minibuffer history
-(savehist-mode 1)
+;; save minibuffer history between sessions
+(savehist-mode t)
 
 ;; show column number in minibuffer
-(column-number-mode 1)
+(column-number-mode t)
 
 ;; disable suspend-frame bindings as I sometimes hit them accidentally
 (global-set-key (kbd "C-z") #'repeat)
@@ -139,10 +108,11 @@
 (bind-key "<f7>" #'scroll-lock-mode)
 
 ;; smooth scrolling (Emacs 29)
-(pixel-scroll-precision-mode 1)
+(pixel-scroll-precision-mode t)
 
 ;; enhance isearch
-(setq isearch-lazy-count t)
+(setq isearch-lazy-count t
+      search-whitespace-regexp ".*?")
 
 ;; I love this commands
 (bind-key "C-c -" #'align)
@@ -151,13 +121,20 @@
 
 (bind-key "C-(" #'insert-parentheses)
 
+;; hl-line is very useful in some buffers, it helps reading
+(bind-key "C-x x h" #'hl-line-mode)
+
+;; Emacs 29: finally we don't need a separate package to duplicate lines
+(bind-key "C-x d" #'duplicate-dwim)
+
 
 ;;; Utilities
 
 ;; minimize information in mode line
-(use-package diminish)
+(use-package diminish :ensure t)
 
 (use-package multiple-cursors
+  :ensure t
   :bind
   (("C->" . mc/mark-next-like-this)
    ("C-<" . mc/mark-previous-like-this)
@@ -166,20 +143,9 @@
   (setq mc/always-run-for-all t)
   )
 
-;; my fingers love this package
-(use-package key-chord
-  :config
-  (key-chord-mode 1)
-  ;; I was searching for something like that for years...
-  (require 'cc-mode)
-  (key-chord-define c-mode-base-map ".." "->")
-  (key-chord-define c-mode-base-map "!+" "!=")
-  (key-chord-define c-mode-base-map ";;" (kbd "C-e ;")))
-
 ;; abbrev mode
 (require 'abbrev)
-(add-hook 'elpaca-after-init-hook (lambda ()
-                                    (diminish 'abbrev-mode)))
+(diminish 'abbrev-mode)
 (add-hook 'org-mode-hook 'abbrev-mode)
 (setq save-abbrevs 'silently)
 ;; Place @@ in your abbreviation and it will place cursor there!
@@ -204,9 +170,18 @@
 
 ;; Give dired highlighting
 (use-package diredfl
+  :ensure t
   :hook (dired-mode  . diredfl-mode))
 
+;; subtrees for dired
+(use-package dired-subtree
+  :ensure t
+  :bind (:map dired-mode-map
+              ("<tab>" . dired-subtree-toggle)
+              ("C-<tab>" . dired-subtree-cycle)))
+
 (use-package avy
+  :ensure t
   :bind (("M-j" . avy-goto-char-timer)
          ("C-c M-w" . avy-copy-line)
          ("C-c C-w" . avy-kill-whole-line)
@@ -224,6 +199,7 @@
 
 ;; display ^L as horizontal lines
 (use-package form-feed
+  :ensure t
   :diminish
   :hook (emacs-lisp-mode . form-feed-mode))
 
@@ -232,13 +208,13 @@
 
 ;; displays available keys if you forgot one of them
 (use-package which-key
+  :ensure t
   :diminish
   :config
   (which-key-mode))
 
 ;; documentation
-(add-hook 'elpaca-after-init-hook (lambda ()
-                                    (diminish 'eldoc-mode)))
+(diminish 'eldoc-mode)
 (global-eldoc-mode 1)
 
 ;; indent
@@ -252,66 +228,8 @@
 ;; (electric-pair-mode t)
 ;; (electric-indent-mode nil)
 
-;; ibuffer
-(require 'ibuffer)
-(add-hook 'ibuffer-mode-hook (lambda ()
-                               (ibuffer-switch-to-saved-filter-groups "default")))
-(setq ibuffer-saved-filter-groups
-      (quote (("default"
-               ("C/C++" (or
-                         (mode . c-mode)
-                         (mode . c++-mode)
-                         (mode . glsl-mode)))
-               ("dired" (mode . dired-mode))
-               ("emacs" (or
-                         (name . "^\\*scratch\\*$")
-                         (name . "^\\*Messages\\*$")
-                         (mode . special-mode)
-                         (mode . package-menu-mode)
-                         (mode . fundamental-mode)
-                         (mode . emacs-lisp-compilation-mode)))
-               ("telega" (or
-                          (mode . telega-root-mode)
-                          (mode . telega-chat-mode)))
-               ("org" (mode . org-mode))
-               ("planner" (or
-                           (name . "^\\*Calendar\\*$")
-                           (name . "^diary$")
-                           (mode . muse-mode)))
-               ("erc" (or
-                       (mode . erc-mode)
-                       (mode . erc-list-menu-mode)))
-               ))))
-
 
 ;;; Programming modes
-
-;; git
-(use-package magit
-  :commands (magit-status magit))
-
-;; highlight TODO keywords, hl-todo package seems very slow.
-;; We're using minad's suggestion instead
-;; https://github.com/tarsius/hl-todo/issues/61
-(defvar my/todo-keywords
-  '(("CLEANUP" . "#b0af6f")
-    ("TODO" . "#cc9393")
-    ("NEXT" . "#dca3a3")
-    ("FAIL" . "#8c5353")
-    ("DONE" . "#afd8af")
-    ("NOTE"   . "#d0bf8f")
-    ("HACK"   . "#d0bf8f")
-    ("TEMP"   . "#d0bf8f")
-    ("FIXME"  . "#cc9393")
-    ))
-(defun my/todo-fontify ()
-  (unless (derived-mode-p 'org-mode)
-    (font-lock-add-keywords
-     nil
-     (mapcar (lambda (x)
-               `(,(concat "\\<" (car x) "\\>") 0 '(:weight bold :foreground ,(cdr x)) prepend))
-             my/todo-keywords))))
-(add-hook 'prog-mode-hook #'my/todo-fontify)
 
 ;; Greate article for setting Emacs for C/C++
 ;; https://tuhdo.github.io/c-ide.html
@@ -338,6 +256,7 @@
 (bind-key "C-<return>" 'c-next-line c++-mode-map)
 
 (use-package company
+  :ensure t
   :diminish
   :init
   (setq company-idle-delay nil
@@ -347,6 +266,7 @@
   :bind (("C-." . company-complete)))
 
 (use-package glsl-mode
+  :ensure t
   :mode (("\\.vert\\'" . glsl-mode)
          ("\\.frag\\'" . glsl-mode)
          ("\\.geom\\'" . glsl-mode)
@@ -357,7 +277,7 @@
 
 ;; view pdf files
 (use-package pdf-tools
-  :mode "\\.pdf\\'"
+  :ensure t
   :config
   (pdf-tools-install)
   (require 'dabbrev)
@@ -376,13 +296,23 @@
 
 ;; theme
 (use-package standard-themes
-  :config (load-theme 'standard-dark t))
+  :ensure t
+  :config
+  ;; make background transparent
+  (set-frame-parameter nil 'alpha-background 0.85)
+  (load-theme 'standard-dark t))
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
 
 ;; tabs
 (tab-bar-mode)
+;; unbind C-TAB, C-S-TAB
+(global-set-key [(control tab)] nil)
+(global-set-key [(control shift tab)] nil)
+(global-set-key [(control shift iso-lefttab)] nil)
+(bind-key "C-<right>" #'tab-next)
+(bind-key "C-<left>" #'tab-previous)
 ;; change tab format
 (defun lida/tab-bar-format (tab i)
   (propertize
@@ -400,7 +330,7 @@
 (setq global-mode-string '(""))
 
 ;; https://www.emacswiki.org/emacs/WholeLineOrRegion
-(defun my/kill-ring-save (beg end flash)
+(defun lida/kill-ring-save (beg end flash)
   (interactive (if (use-region-p)
                    (list (region-beginning) (region-end) nil)
                  (list (line-beginning-position)
@@ -411,7 +341,7 @@
       (if (equal (current-column) 0)
           (goto-char end)
         (goto-char beg)))))
-(global-set-key [remap kill-ring-save] 'my/kill-ring-save)
+(global-set-key [remap kill-ring-save] 'lida/kill-ring-save)
 (put 'kill-region 'interactive-form
      '(interactive
        (if (use-region-p)
@@ -421,12 +351,16 @@
 
 ;;; Misc
 
-;; make Emacs work with russian keyboard (need to install reverse-im package)
-;; (setq reverse-im-input-methods '("russian-computer"))
-;; (reverse-im-mode t)
+;; make Emacs keybindings work with russian keyboard
+(use-package reverse-im
+  :ensure t
+  :config
+  (setq reverse-im-input-methods '("russian-computer"))
+  (reverse-im-mode t))
 
 ;; telegram
 (use-package telega
+  :ensure t
   :bind-keymap ("M-t" . telega-prefix-map)
   :config
   (setq telega-completing-read-function 'completing-read) ;; use builtin completion
@@ -434,45 +368,45 @@
   (global-telega-mnz-mode t)
   (require 'telega-stories)
   (telega-stories-mode t))
-;; It seems like modern Emacs has it's own emoji support
-;; (set-fontset-font t 'unicode "Symbola" nil 'append)
 
-;; mail with mu4e(don't forget to do 'yay -S mu'!)
-;; https://github.com/daviwil/emacs-from-scratch/blob/master/show-notes/Emacs-Mail-03.org
-(use-package mu4e
-  :elpaca nil
-  :load-path "/usr/local/share/emacs/site-lisp/mu4e/"
-  :commands (mu4e)
-  :config
-  (setq mu4e-change-filenames-when-moving t
-        mu4e-update-interval 1800
-        mu4e-get-mail-command "mbsync -a"
-        mu4e-maildir "~/Mail")
-  (setq mu4e-drafts-folder "/[Gmail]/Drafts"
-        mu4e-sent-folder "/[Gmail]/Sent Mail"
-        mu4e-refile-folder "/[Gmail]/All Mail"
-        mu4e-trash-folder "/[Gmail]/Trash")
-  (setq mu4e-maildir-shortcuts
-        '(("/Inbox" . ?i)
-          ("/[Gmail]/Sent Mail" . ?s)
-          ("/[Gmail]/Trash" . ?t)
-          ("/[Gmail]/Drafts" . ?d)
-          ("/[Gmail]/All Mail" . ?a)))
-  ;; Make sure plain text mails flow correctly for recipients
-  (setq mu4e-compose-format-flowed t)
-  (setq smtpmail-smtp-server "smtp.gmail.com"
-        smtpmail-smtp-service 465
-        smtpmail-stream-type  'ssl)
-  ;; Configure the function to use for sending mail
-  (setq message-send-mail-function 'smtpmail-send-it))
+;; ;; matrix
+;; (use-package ement
+;;   :ensure t
+;;   :bind ("<f2>" . ement-room-list))
 
 ;; Org mode
 (setq org-catch-invisible-edits 'smart)
 
-;; (org-babel-do-load-languages
-;;  'org-babel-load-languages
-;;  '((calc . t)
-;;    (python . t)))
+(defun lida/load-babel-languages ()
+  (interactive)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((calc . t)
+     (python . t)
+     (C . t))))
+
+;; the best mail and newsreader in da world
+;; NOTE: `gnus-select-method' and `gnus-secondary-select-methods' are
+;; set as customization variables. I set `gnus-select-method' to nnmail.
+(use-package gnus
+  :custom
+  (gnus-asynchronous t)
+  (gnus-group-line-format "%M%p%P%5y:%B%(%g%)\n")
+  (gnus-thread-hide-subtree t)
+  (gnus-summary-thread-gathering-function 'gnus-gather-threads-by-subject)
+  (gnus-topic-line-format "%i[ %A: %(%{%n%}%) ]%v\n")
+  (gnus-use-cache t))
+
+;; update mail every 15 minutes
+(defun lida/update-maildir ()
+  (interactive)
+  (message "Updating maildir...")
+  (start-process "mbsync" "*mbsync*" "mbsync" "-a"))
+(run-with-timer (* 60 15) t 'lida/update-maildir)
+
+;; gnus-dired
+(use-package gnus-dired
+  :commands (gnus-dired-attach))
 
 ;; music in emacs
 (require 'lida-music)
