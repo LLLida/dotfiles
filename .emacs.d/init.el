@@ -108,7 +108,7 @@
 (bind-key "<f7>" #'scroll-lock-mode)
 
 ;; smooth scrolling (Emacs 29)
-(pixel-scroll-precision-mode t)
+;; (pixel-scroll-precision-mode t)
 
 ;; enhance isearch
 (setq isearch-lazy-count t
@@ -169,9 +169,9 @@
       dired-mouse-drag-files t)
 
 ;; Give dired highlighting
-(use-package diredfl
-  :ensure t
-  :hook (dired-mode  . diredfl-mode))
+;; (use-package diredfl
+;;   :ensure t
+;;   :hook (dired-mode  . diredfl-mode))
 
 ;; subtrees for dired
 (use-package dired-subtree
@@ -298,8 +298,6 @@
 (use-package standard-themes
   :ensure t
   :config
-  ;; make background transparent
-  (set-frame-parameter nil 'alpha-background 0.85)
   (load-theme 'standard-dark t))
 
 ;; font
@@ -388,6 +386,8 @@
 ;; the best mail and newsreader in da world
 ;; NOTE: `gnus-select-method' and `gnus-secondary-select-methods' are
 ;; set as customization variables. I set `gnus-select-method' to nnmail.
+;; NOTE: fast searching with notmuch is set up with this:
+;; (gnus-search-engine gnus-search-notmuch (remove-prefix "~/Mail"))
 (use-package gnus
   :custom
   (gnus-asynchronous t)
@@ -397,12 +397,16 @@
   (gnus-topic-line-format "%i[ %A: %(%{%n%}%) ]%v\n")
   (gnus-use-cache t))
 
-;; update mail every 15 minutes
+;; use smtp for sending
+;; NOTE: password is stored in ~/.authinfo.gpg
+(setq smtpmail-smtp-server "smtp.gmail.com"
+      smtpmail-smtp-service 465
+      smtpmail-stream-type  'ssl)
+
 (defun lida/update-maildir ()
   (interactive)
   (message "Updating maildir...")
   (start-process "mbsync" "*mbsync*" "mbsync" "-a"))
-(run-with-timer (* 60 15) t 'lida/update-maildir)
 
 ;; gnus-dired
 (use-package gnus-dired
