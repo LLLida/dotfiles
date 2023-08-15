@@ -8,7 +8,6 @@
 
 ;; setup package.el
 (setq package-check-signature nil
-      package-native-compile t
       package-enable-at-startup nil
       package-quickstart t)
 (package-initialize)
@@ -23,6 +22,8 @@
 
 ;; set load path
 (add-to-list 'load-path "~/.emacs.d/lisp/")
+
+(blink-cursor-mode -1)
 
 (delete-selection-mode t)
 
@@ -68,6 +69,9 @@
 ;; save minibuffer history between sessions
 (savehist-mode t)
 
+;; M-o is usually unbound, why waste such an easy keybinding?
+(bind-key "M-o" #'other-window)
+
 ;; show column number in minibuffer
 (column-number-mode t)
 
@@ -107,8 +111,8 @@
 ;; use f7 for reading documents
 (bind-key "<f7>" #'scroll-lock-mode)
 
-;; smooth scrolling (Emacs 29)
-;; (pixel-scroll-precision-mode t)
+;; smooth scrolling (Emacs 29), NOTE: this doesn't work on commercial Emacs
+(pixel-scroll-precision-mode t)
 
 ;; enhance isearch
 (setq isearch-lazy-count t
@@ -130,22 +134,8 @@
 
 ;;; Utilities
 
-;; minimize information in mode line
-(use-package diminish :ensure t)
-
-(use-package multiple-cursors
-  :ensure t
-  :bind
-  (("C->" . mc/mark-next-like-this)
-   ("C-<" . mc/mark-previous-like-this)
-   ("C-c C-=" . mc/mark-all-like-this))
-  :config
-  (setq mc/always-run-for-all t)
-  )
-
 ;; abbrev mode
 (require 'abbrev)
-(diminish 'abbrev-mode)
 (add-hook 'org-mode-hook 'abbrev-mode)
 (setq save-abbrevs 'silently)
 ;; Place @@ in your abbreviation and it will place cursor there!
@@ -169,16 +159,9 @@
       dired-mouse-drag-files t)
 
 ;; Give dired highlighting
-;; (use-package diredfl
-;;   :ensure t
-;;   :hook (dired-mode  . diredfl-mode))
-
-;; subtrees for dired
-(use-package dired-subtree
+(use-package diredfl
   :ensure t
-  :bind (:map dired-mode-map
-              ("<tab>" . dired-subtree-toggle)
-              ("C-<tab>" . dired-subtree-cycle)))
+  :hook (dired-mode  . diredfl-mode))
 
 (use-package avy
   :ensure t
@@ -200,7 +183,6 @@
 ;; display ^L as horizontal lines
 (use-package form-feed
   :ensure t
-  :diminish
   :hook (emacs-lisp-mode . form-feed-mode))
 
 ;; setup eshell
@@ -209,12 +191,10 @@
 ;; displays available keys if you forgot one of them
 (use-package which-key
   :ensure t
-  :diminish
   :config
   (which-key-mode))
 
 ;; documentation
-(diminish 'eldoc-mode)
 (global-eldoc-mode 1)
 
 ;; indent
@@ -257,7 +237,6 @@
 
 (use-package company
   :ensure t
-  :diminish
   :init
   (setq company-idle-delay nil
         company-require-match nil
@@ -286,7 +265,7 @@
 
 ;;; UI
 
-;; Modeline
+;; I display these in tab-bar
 (setq inhibit-compacting-font-caches t
       display-time-default-load-average nil
       display-time-format " %R ")
@@ -294,11 +273,21 @@
 (display-battery-mode t)
 (display-time)
 
+;; My custom modeline
+(setq-default mode-line-format
+      '("%e"
+        " %*%@ "
+        (:eval
+         (propertize (format " %s" (buffer-name))
+                     'face 'mode-line-buffer-id))
+        (vc-mode vc-mode)
+        (:eval
+         (list
+          (propertize "  λ  " 'face 'shadow)
+          (propertize (capitalize (symbol-name major-mode)) 'face 'bold)))))
+
 ;; theme
-(use-package standard-themes
-  :ensure t
-  :config
-  (load-theme 'standard-dark t))
+(load-theme 'leuven-dark)
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
