@@ -49,7 +49,11 @@
       completion-styles '(basic substring flex)
       ;; from article https://www.scss.tcd.ie/~sulimanm/posts/default-emacs-completion.html
       completions-format 'one-column
-      completions-max-height 40)
+      completions-max-height 40
+      ;; make all completions case-insensitive
+      read-file-name-completion-ignore-case t
+      read-buffer-completion-ignore-case t
+      completion-ignore-case t)
 (bind-key "C-n" 'minibuffer-next-completion minibuffer-mode-map)
 (bind-key "C-p" 'minibuffer-previous-completion minibuffer-mode-map)
 
@@ -198,7 +202,6 @@
 (global-eldoc-mode 1)
 
 ;; indent
-(global-set-key (kbd "RET") 'newline-and-indent)
 (setq-default indent-tabs-mode nil)
 (setq c-default-style "gnu")
 
@@ -225,15 +228,6 @@
   (font-lock-add-keywords
     mode-iter
     '(("\\([_a-zA-Z][_a-zA-Z0-9]*\\)\s*(" 1 'font-lock-function-name-face keep)) t))
-
-;; some keybindings for c/c++
-(require 'cc-mode)
-(defun c-next-line ()
-  (interactive)
-  (move-end-of-line nil)
-  (newline-and-indent))
-(bind-key "C-<return>" 'c-next-line c-mode-map)
-(bind-key "C-<return>" 'c-next-line c++-mode-map)
 
 (use-package company
   :ensure t
@@ -374,7 +368,7 @@
 
 ;; the best mail and newsreader in da world
 ;; NOTE: `gnus-select-method' and `gnus-secondary-select-methods' are
-;; set as customization variables. I set `gnus-select-method' to nnmail.
+;; set as customization variables. I set `gnus-select-method' to nnmaildir.
 ;; NOTE: fast searching with notmuch is set up with this:
 ;; (gnus-search-engine gnus-search-notmuch (remove-prefix "~/Mail"))
 (use-package gnus
