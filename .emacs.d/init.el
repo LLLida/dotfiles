@@ -281,7 +281,7 @@
           (propertize (capitalize (symbol-name major-mode)) 'face 'bold)))))
 
 ;; theme
-(load-theme 'leuven-dark)
+(load-theme 'tango-dark)
 
 ;; font
 (set-frame-font "DejaVu Sans Mono 11" t t)
@@ -348,7 +348,8 @@
   (require 'telega-mnz)
   (global-telega-mnz-mode t)
   (require 'telega-stories)
-  (telega-stories-mode t))
+  (telega-stories-mode t)
+  (require 'telega-dired-dwim))
 
 ;; ;; matrix
 ;; (use-package ement
