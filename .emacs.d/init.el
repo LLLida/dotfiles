@@ -14,9 +14,9 @@
 ;; set package archives
 (setq package-archives
       '(("GNU ELPA"     . "https://elpa.gnu.org/packages/")
-        ("MELPA"        . "https://melpa.org/packages/")
-        ("MELPA-STABLE" . "https://stable.melpa.org/packages/")
-        ("NON GNU ELPA" . "https://elpa.nongnu.org/nongnu/")))
+	("MELPA"        . "https://melpa.org/packages/")
+	("MELPA-STABLE" . "https://stable.melpa.org/packages/")
+	("NON GNU ELPA" . "https://elpa.nongnu.org/nongnu/")))
 (setq use-package-verbose t
       use-package-ignore-unknown-keywords t)
 
@@ -89,15 +89,15 @@
 ;; I use control for specifying prefix argument
 ;; so why not bind some useful things to easier keybindings
 (dolist (bind-iter '(("1" "!")
-                     ("2" "@")
-                     ("3" "#")
-                     ("4" "$")
-                     ("5" "%")
-                     ("6" "^")
-                     ("7" "&")
-                     ("8" "*")
-                     ("9" "(")
-                     ("0" ")")))
+		     ("2" "@")
+		     ("3" "#")
+		     ("4" "$")
+		     ("5" "%")
+		     ("6" "^")
+		     ("7" "&")
+		     ("8" "*")
+		     ("9" "(")
+		     ("0" ")")))
   (define-key key-translation-map (kbd (concat "M-" (car bind-iter))) (kbd (concat "M-" (cadr bind-iter)))))
 
 ;; buffer-menu > buffer-list
@@ -146,10 +146,10 @@
 (defadvice expand-abbrev (after my-expand-abbrev activate)
   (if ad-return-value
       (run-with-idle-timer 0 nil
-                           (lambda ()
-                             (let ((cursor "@@"))
-                               (if (search-backward cursor last-abbrev-location t)
-                                   (delete-char (length cursor))))))))
+			   (lambda ()
+			     (let ((cursor "@@"))
+			       (if (search-backward cursor last-abbrev-location t)
+				   (delete-char (length cursor))))))))
 
 ;; dired - the file manager
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
@@ -170,10 +170,10 @@
 (use-package avy
   :ensure t
   :bind (("M-j" . avy-goto-char-timer)
-         ("C-c M-w" . avy-copy-line)
-         ("C-c C-w" . avy-kill-whole-line)
-         :map isearch-mode-map
-         ("M-j" . avy-isearch)))
+	 ("C-c M-w" . avy-copy-line)
+	 ("C-c C-w" . avy-kill-whole-line)
+	 :map isearch-mode-map
+	 ("M-j" . avy-isearch)))
 
 ;; proced - Emacs process manager
 ;; https://laurencewarne.github.io/emacs/programming/2022/12/26/exploring-proced.html
@@ -201,10 +201,6 @@
 ;; documentation
 (global-eldoc-mode 1)
 
-;; indent
-(setq-default indent-tabs-mode nil)
-(setq c-default-style "gnu")
-
 ;; parentheses
 (show-paren-mode t)
 (setq show-paren-style 'mixed);; highlight brackets if visible, else entire expression
@@ -219,7 +215,7 @@
 
 ;; improve syntax highlighting in C-based modes
 ;; https://emacs.stackexchange.com/questions/16750/better-syntax-higlighting-for-member-variables-and-function-calls-in-cpp-mode
-(dolist (mode-iter '(c-mode c++-mode glsl-mode))
+(dolist (mode-iter '(c-mode c++-mode glsl-mode python-mode))
   ;; constants
   (font-lock-add-keywords
     mode-iter
@@ -233,20 +229,30 @@
   :ensure t
   :init
   (setq company-idle-delay nil
-        company-require-match nil
-        company-tooltip-minimum-width 60)
+	company-require-match nil
+	company-tooltip-minimum-width 60)
   :config (global-company-mode)
   :bind (("C-." . company-complete)))
 
 (use-package glsl-mode
   :ensure t
   :mode (("\\.vert\\'" . glsl-mode)
-         ("\\.frag\\'" . glsl-mode)
-         ("\\.geom\\'" . glsl-mode)
-         ("\\.comp\\'" . glsl-mode)
-         ("\\.glsl\\'" . glsl-mode))
+	 ("\\.frag\\'" . glsl-mode)
+	 ("\\.geom\\'" . glsl-mode)
+	 ("\\.comp\\'" . glsl-mode)
+	 ("\\.glsl\\'" . glsl-mode))
   :config
   (bind-key "C-<return>" 'c-next-line glsl-mode-map))
+
+;; EIN for ipython notebooks
+(use-package ein
+  :ensure t
+  :config
+  (setq ein:use-auto-complete t)
+  (setq ein:complete-on-dot t)
+  (setq ein:completion-backend 'ein:use-company-backend)
+  (setq ein:use-auto-complete-superpack nil)
+  (setq ein:use-smartrep nil))
 
 ;; view pdf files
 (use-package pdf-tools
@@ -270,15 +276,15 @@
 ;; My custom modeline
 (setq-default mode-line-format
       '("%e"
-        " %*%@ "
-        (:eval
-         (propertize (format " %s" (buffer-name))
-                     'face 'mode-line-buffer-id))
-        (vc-mode vc-mode)
-        (:eval
-         (list
-          (propertize "  λ  " 'face 'shadow)
-          (propertize (capitalize (symbol-name major-mode)) 'face 'bold)))))
+	" %*%@ "
+	(:eval
+	 (propertize (format " %s" (buffer-name))
+		     'face 'mode-line-buffer-id))
+	(vc-mode vc-mode)
+	(:eval
+	 (list
+	  (propertize "  λ  " 'face 'shadow)
+	  (propertize (symbol-name major-mode) 'face 'bold)))))
 
 ;; theme
 (load-theme 'tango-dark)
@@ -305,29 +311,29 @@
 (defun lida/tab-bar-format-global ()
   `((global menu-item ,(string-trim-right (format-mode-line lida/global-mode-string)) ignore)))
 (setq tab-bar-format '(tab-bar-format-history
-                       tab-bar-format-tabs
-                       tab-bar-format-align-right
-                       lida/tab-bar-format-global))
+		       tab-bar-format-tabs
+		       tab-bar-format-align-right
+		       lida/tab-bar-format-global))
 (setq global-mode-string '(""))
 
 ;; https://www.emacswiki.org/emacs/WholeLineOrRegion
 (defun lida/kill-ring-save (beg end flash)
   (interactive (if (use-region-p)
-                   (list (region-beginning) (region-end) nil)
-                 (list (line-beginning-position)
-                       (line-beginning-position 2) 'flash)))
+		   (list (region-beginning) (region-end) nil)
+		 (list (line-beginning-position)
+		       (line-beginning-position 2) 'flash)))
   (kill-ring-save beg end)
   (when flash
     (save-excursion
       (if (equal (current-column) 0)
-          (goto-char end)
-        (goto-char beg)))))
+	  (goto-char end)
+	(goto-char beg)))))
 (global-set-key [remap kill-ring-save] 'lida/kill-ring-save)
 (put 'kill-region 'interactive-form
      '(interactive
        (if (use-region-p)
-           (list (region-beginning) (region-end))
-         (list (line-beginning-position) (line-beginning-position 2)))))
+	   (list (region-beginning) (region-end))
+	 (list (line-beginning-position) (line-beginning-position 2)))))
 
 
 ;;; Misc
@@ -344,11 +350,10 @@
   :ensure t
   :bind-keymap ("M-t" . telega-prefix-map)
   :config
+  (setq telega-emoji-use-images nil)
   (setq telega-completing-read-function 'completing-read) ;; use builtin completion
   (require 'telega-mnz)
   (global-telega-mnz-mode t)
-  (require 'telega-stories)
-  (telega-stories-mode t)
   (require 'telega-dired-dwim))
 
 ;; ;; matrix
@@ -366,6 +371,13 @@
    '((calc . t)
      (python . t)
      (C . t))))
+
+;; syntax highlighting for code blocks in exported pdfs
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+	"pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
 
 ;; the best mail and newsreader in da world
 ;; NOTE: `gnus-select-method' and `gnus-secondary-select-methods' are
