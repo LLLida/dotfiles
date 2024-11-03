@@ -8,15 +8,14 @@
 
 ;; setup package.el
 (setq package-check-signature nil
-      package-enable-at-startup nil
-      package-quickstart t)
+      package-enable-at-startup nil)
 (package-initialize)
 ;; set package archives
 (setq package-archives
       '(("GNU ELPA"     . "https://elpa.gnu.org/packages/")
-	("MELPA"        . "https://melpa.org/packages/")
-	("MELPA-STABLE" . "https://stable.melpa.org/packages/")
-	("NON GNU ELPA" . "https://elpa.nongnu.org/nongnu/")))
+    ("MELPA"        . "https://melpa.org/packages/")
+    ("MELPA-STABLE" . "https://stable.melpa.org/packages/")
+    ("NON GNU ELPA" . "https://elpa.nongnu.org/nongnu/")))
 (setq use-package-verbose t
       use-package-ignore-unknown-keywords t)
 
@@ -33,6 +32,14 @@
       make-backup-files nil ;; Don't make backups
       confirm-kill-processes nil ;; don't bother confirming killing processes
       )
+
+;; disable creating lock files when editing with Tramp. This makes editing over ssh significantly fast
+(defun my-disable-tramp-lockfiles ()
+  "Disable lockfiles for tramp."
+  (require 'tramp)
+  (when (tramp-tramp-file-p (buffer-file-name))
+    (setq-local create-lockfiles nil)))
+(add-hook 'find-file-hook 'my-disable-tramp-lockfiles)
 
 ;; smooth scrolling
 (setq scroll-step 1
@@ -63,10 +70,6 @@
 
 (setq undo-limit (* 8 1024 1024))
 
-;; start emacs server
-;; so we can just run emacsclient -c in other frames with the same emacs instance
-(server-start)
-
 ;; Delete trailing whitespaces before saving buffer
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
@@ -89,15 +92,15 @@
 ;; I use control for specifying prefix argument
 ;; so why not bind some useful things to easier keybindings
 (dolist (bind-iter '(("1" "!")
-		     ("2" "@")
-		     ("3" "#")
-		     ("4" "$")
-		     ("5" "%")
-		     ("6" "^")
-		     ("7" "&")
-		     ("8" "*")
-		     ("9" "(")
-		     ("0" ")")))
+             ("2" "@")
+             ("3" "#")
+             ("4" "$")
+             ("5" "%")
+             ("6" "^")
+             ("7" "&")
+             ("8" "*")
+             ("9" "(")
+             ("0" ")")))
   (define-key key-translation-map (kbd (concat "M-" (car bind-iter))) (kbd (concat "M-" (cadr bind-iter)))))
 
 ;; buffer-menu > buffer-list
@@ -146,10 +149,10 @@
 (defadvice expand-abbrev (after my-expand-abbrev activate)
   (if ad-return-value
       (run-with-idle-timer 0 nil
-			   (lambda ()
-			     (let ((cursor "@@"))
-			       (if (search-backward cursor last-abbrev-location t)
-				   (delete-char (length cursor))))))))
+               (lambda ()
+                 (let ((cursor "@@"))
+                   (if (search-backward cursor last-abbrev-location t)
+                   (delete-char (length cursor))))))))
 
 ;; dired - the file manager
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
@@ -170,10 +173,10 @@
 (use-package avy
   :ensure t
   :bind (("M-j" . avy-goto-char-timer)
-	 ("C-c M-w" . avy-copy-line)
-	 ("C-c C-w" . avy-kill-whole-line)
-	 :map isearch-mode-map
-	 ("M-j" . avy-isearch)))
+     ("C-c M-w" . avy-copy-line)
+     ("C-c C-w" . avy-kill-whole-line)
+     :map isearch-mode-map
+     ("M-j" . avy-isearch)))
 
 ;; proced - Emacs process manager
 ;; https://laurencewarne.github.io/emacs/programming/2022/12/26/exploring-proced.html
@@ -210,8 +213,19 @@
 
 ;;; Programming modes
 
+;; jump-to-defintion functionality for over 50 languages
+(use-package dumb-jump
+  :ensure t
+  :config
+  (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+
 ;; Greate article for setting Emacs for C/C++
 ;; https://tuhdo.github.io/c-ide.html
+
+(setq-default c-basic-offset 4)  ;; Set indent width to 4 spaces
+(setq-default tab-width 4)       ;; Set tab width to 4 spaces
+(setq-default indent-tabs-mode nil)
 
 ;; improve syntax highlighting in C-based modes
 ;; https://emacs.stackexchange.com/questions/16750/better-syntax-higlighting-for-member-variables-and-function-calls-in-cpp-mode
@@ -229,18 +243,18 @@
   :ensure t
   :init
   (setq company-idle-delay nil
-	company-require-match nil
-	company-tooltip-minimum-width 60)
+    company-require-match nil
+    company-tooltip-minimum-width 60)
   :config (global-company-mode)
   :bind (("C-." . company-complete)))
 
 (use-package glsl-mode
   :ensure t
   :mode (("\\.vert\\'" . glsl-mode)
-	 ("\\.frag\\'" . glsl-mode)
-	 ("\\.geom\\'" . glsl-mode)
-	 ("\\.comp\\'" . glsl-mode)
-	 ("\\.glsl\\'" . glsl-mode))
+     ("\\.frag\\'" . glsl-mode)
+     ("\\.geom\\'" . glsl-mode)
+     ("\\.comp\\'" . glsl-mode)
+     ("\\.glsl\\'" . glsl-mode))
   :config
   (bind-key "C-<return>" 'c-next-line glsl-mode-map))
 
@@ -265,26 +279,18 @@
 
 ;;; UI
 
-;; I display these in tab-bar
-(setq inhibit-compacting-font-caches t
-      display-time-default-load-average nil
-      display-time-format " %R ")
-(setq battery-mode-line-format "(%b%p%%)")
-(display-battery-mode t)
-(display-time)
-
 ;; My custom modeline
 (setq-default mode-line-format
       '("%e"
-	" %*%@ "
-	(:eval
-	 (propertize (format " %s" (buffer-name))
-		     'face 'mode-line-buffer-id))
-	(vc-mode vc-mode)
-	(:eval
-	 (list
-	  (propertize "  λ  " 'face 'shadow)
-	  (propertize (symbol-name major-mode) 'face 'bold)))))
+    " %*%@ "
+    (:eval
+     (propertize (format " %s" (buffer-name))
+             'face 'mode-line-buffer-id))
+    (vc-mode vc-mode)
+    (:eval
+     (list
+      (propertize "  λ  " 'face 'shadow)
+      (propertize (symbol-name major-mode) 'face 'bold)))))
 
 ;; theme
 (load-theme 'tango-dark)
@@ -311,29 +317,29 @@
 (defun lida/tab-bar-format-global ()
   `((global menu-item ,(string-trim-right (format-mode-line lida/global-mode-string)) ignore)))
 (setq tab-bar-format '(tab-bar-format-history
-		       tab-bar-format-tabs
-		       tab-bar-format-align-right
-		       lida/tab-bar-format-global))
+               tab-bar-format-tabs
+               tab-bar-format-align-right
+               lida/tab-bar-format-global))
 (setq global-mode-string '(""))
 
 ;; https://www.emacswiki.org/emacs/WholeLineOrRegion
 (defun lida/kill-ring-save (beg end flash)
   (interactive (if (use-region-p)
-		   (list (region-beginning) (region-end) nil)
-		 (list (line-beginning-position)
-		       (line-beginning-position 2) 'flash)))
+           (list (region-beginning) (region-end) nil)
+         (list (line-beginning-position)
+               (line-beginning-position 2) 'flash)))
   (kill-ring-save beg end)
   (when flash
     (save-excursion
       (if (equal (current-column) 0)
-	  (goto-char end)
-	(goto-char beg)))))
+      (goto-char end)
+    (goto-char beg)))))
 (global-set-key [remap kill-ring-save] 'lida/kill-ring-save)
 (put 'kill-region 'interactive-form
      '(interactive
        (if (use-region-p)
-	   (list (region-beginning) (region-end))
-	 (list (line-beginning-position) (line-beginning-position 2)))))
+       (list (region-beginning) (region-end))
+     (list (line-beginning-position) (line-beginning-position 2)))))
 
 
 ;;; Misc
@@ -377,7 +383,7 @@
       org-latex-packages-alist '(("" "minted"))
       org-latex-pdf-process
       '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-	"pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+    "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
 
 ;; the best mail and newsreader in da world
 ;; NOTE: `gnus-select-method' and `gnus-secondary-select-methods' are
