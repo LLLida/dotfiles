@@ -49,6 +49,8 @@
 ;; always type y instead of yes
 (defalias 'yes-or-no-p 'y-or-n-p)
 
+(setq large-file-warning-threshold (* 500 1000 1000)) ; show warning on files 500MB and bigger, I work with big files alot
+
 ;; enhance builtin completion
 (setq completion-ignore-case t
       completions-detailed t
