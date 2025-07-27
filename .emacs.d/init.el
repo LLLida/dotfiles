@@ -222,12 +222,22 @@
   (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
+;; magit to rule them all
+(use-package magit
+  :ensure t
+  :config
+  (setq auto-revert-remote-files nil))
+
 ;; Greate article for setting Emacs for C/C++
 ;; https://tuhdo.github.io/c-ide.html
 
 (setq-default c-basic-offset 4)  ;; Set indent width to 4 spaces
 (setq-default tab-width 4)       ;; Set tab width to 4 spaces
 (setq-default indent-tabs-mode nil)
+
+;; TODO: make these global settings
+(c-set-offset 'innamespace 0)  ; No indentation for namespaces
+(c-set-offset 'extern-lang 0)  ; No indentation for extern "C"
 
 ;; improve syntax highlighting in C-based modes
 ;; https://emacs.stackexchange.com/questions/16750/better-syntax-higlighting-for-member-variables-and-function-calls-in-cpp-mode
@@ -250,26 +260,6 @@
   :config (global-company-mode)
   :bind (("C-." . company-complete)))
 
-(use-package glsl-mode
-  :ensure t
-  :mode (("\\.vert\\'" . glsl-mode)
-     ("\\.frag\\'" . glsl-mode)
-     ("\\.geom\\'" . glsl-mode)
-     ("\\.comp\\'" . glsl-mode)
-     ("\\.glsl\\'" . glsl-mode))
-  :config
-  (bind-key "C-<return>" 'c-next-line glsl-mode-map))
-
-;; EIN for ipython notebooks
-(use-package ein
-  :ensure t
-  :config
-  (setq ein:use-auto-complete t)
-  (setq ein:complete-on-dot t)
-  (setq ein:completion-backend 'ein:use-company-backend)
-  (setq ein:use-auto-complete-superpack nil)
-  (setq ein:use-smartrep nil))
-
 ;; view pdf files
 (use-package pdf-tools
   :ensure t
@@ -277,6 +267,35 @@
   (pdf-tools-install)
   (require 'dabbrev)
   (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode))
+
+
+;;; Optimizing tramp. Mostly inspired by https://coredumped.dev/2025/06/18/making-tramp-go-brrrr./
+(setq remote-file-name-inhibit-locks t
+      tramp-use-scp-direct-remote-copying t
+      remote-file-name-inhibit-auto-save-visited t)
+
+(setq tramp-copy-size-limit (* 1024 1024) ;; 1MB
+      tramp-verbose 3)
+
+(connection-local-set-profile-variables
+ 'remote-direct-async-process
+ '((tramp-direct-async-process . t)))
+
+(connection-local-set-profiles
+ '(:application tramp :protocol "scp")
+ 'remote-direct-async-process)
+
+(setq magit-tramp-pipe-stty-settings 'pty)
+
+(with-eval-after-load 'tramp
+  (with-eval-after-load 'compile
+    (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+
+;; disable vc for remote files
+(defun my-vc-off-if-remote ()
+  (if (file-remote-p (buffer-file-name))
+      (setq-local vc-handled-backends nil)))
+(add-hook 'find-file-hook 'my-vc-off-if-remote)
 
 
 ;;; UI
@@ -386,38 +405,6 @@
       org-latex-pdf-process
       '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
     "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-
-;; the best mail and newsreader in da world
-;; NOTE: `gnus-select-method' and `gnus-secondary-select-methods' are
-;; set as customization variables. I set `gnus-select-method' to nnmaildir.
-;; NOTE: fast searching with notmuch is set up with this:
-;; (gnus-search-engine gnus-search-notmuch (remove-prefix "~/Mail"))
-(use-package gnus
-  :custom
-  (gnus-asynchronous t)
-  (gnus-group-line-format "%M%p%P%5y:%B%(%g%)\n")
-  (gnus-thread-hide-subtree t)
-  (gnus-summary-thread-gathering-function 'gnus-gather-threads-by-subject)
-  (gnus-topic-line-format "%i[ %A: %(%{%n%}%) ]%v\n")
-  (gnus-use-cache t))
-
-;; use smtp for sending
-;; NOTE: password is stored in ~/.authinfo.gpg
-(setq smtpmail-smtp-server "smtp.gmail.com"
-      smtpmail-smtp-service 465
-      smtpmail-stream-type  'ssl)
-
-(defun lida/update-maildir ()
-  (interactive)
-  (message "Updating maildir...")
-  (start-process "mbsync" "*mbsync*" "mbsync" "-a"))
-
-;; gnus-dired
-(use-package gnus-dired
-  :commands (gnus-dired-attach))
-
-;; music in emacs
-(require 'lida-music)
 
 
 
